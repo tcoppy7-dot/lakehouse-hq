@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'next/navigation'
+import TaskCalendar from '../components/TaskCalendar'
 
 const TASK_MENU = [
   { title: 'Boat Cover On', price: 50, icon: '🚤', description: 'We will put your boat cover on securely' },
@@ -29,6 +30,7 @@ export default function Tasks() {
   const [endDate, setEndDate] = useState('')
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [view, setView] = useState<'list' | 'calendar'>('list')
   const router = useRouter()
 
   useEffect(() => {
@@ -180,23 +182,42 @@ export default function Tasks() {
             </div>
             {tasks.length > 0 && (
               <div className="mt-10">
-                <h3 className="text-white font-bold text-lg mb-4">Your Requests</h3>
-                <div className="space-y-3">
-                  {tasks.map((task) => (
-                    <div key={task.id} className="bg-[#1B4F8A] rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-white font-semibold">{task.title}</p>
-                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColor(task.status)}`}>
-                          {task.status}
-                        </span>
-                      </div>
-                      <p className="text-[#5BA4CF] text-sm">
-                        {task.scheduled_date}{task.scheduled_time ? ` at ${formatTime(task.scheduled_time)}` : ''}
-                      </p>
-                      {task.description && <p className="text-[#5BA4CF] text-sm mt-1">{task.description}</p>}
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-bold text-lg">Your Requests</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setView('list')}
+                      className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${view === 'list' ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
+                    >
+                      List
+                    </button>
+                    <button
+                      onClick={() => setView('calendar')}
+                      className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${view === 'calendar' ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
+                    >
+                      Calendar
+                    </button>
+                  </div>
                 </div>
+                {view === 'calendar' && <TaskCalendar tasks={tasks} />}
+                {view === 'list' && (
+                  <div className="space-y-3">
+                    {tasks.map((task) => (
+                      <div key={task.id} className="bg-[#1B4F8A] rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-white font-semibold">{task.title}</p>
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColor(task.status)}`}>
+                            {task.status}
+                          </span>
+                        </div>
+                        <p className="text-[#5BA4CF] text-sm">
+                          {task.scheduled_date}{task.scheduled_time ? ` at ${formatTime(task.scheduled_time)}` : ''}
+                        </p>
+                        {task.description && <p className="text-[#5BA4CF] text-sm mt-1">{task.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

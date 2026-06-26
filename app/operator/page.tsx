@@ -2,12 +2,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'next/navigation'
+import TaskCalendar from '../components/TaskCalendar'
 
 export default function OperatorDashboard() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [authorized, setAuthorized] = useState(false)
+  const [view, setView] = useState<'list' | 'calendar'>('list')
   const router = useRouter()
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function OperatorDashboard() {
     const { data, error } = await supabase
       .from('tasks')
       .select('*, profiles(full_name)')
-      .order('created_at', { ascending: false })
+      .order('scheduled_date', { ascending: true })
     console.log('tasks:', data, 'error:', error)
     setTasks(data || [])
     setLoading(false)
@@ -78,80 +80,99 @@ export default function OperatorDashboard() {
             <h2 className="text-white text-xl font-bold">All Task Requests</h2>
             <p className="text-[#5BA4CF] text-sm">{tasks.length} total requests</p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {['all', 'requested', 'confirmed', 'in_progress', 'completed'].map(s => (
-              <button
-                key={s}
-                onClick={() => setFilter(s)}
-                className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${filter === s ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
-              >
-                {s === 'in_progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setView('list')}
+              className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${view === 'list' ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
+            >
+              List
+            </button>
+            <button
+              onClick={() => setView('calendar')}
+              className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${view === 'calendar' ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
+            >
+              Calendar
+            </button>
           </div>
         </div>
-        {filtered.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-4">📋</div>
-            <p className="text-white font-bold text-lg">No requests yet</p>
-            <p className="text-[#5BA4CF] text-sm mt-1">Task requests will appear here when owners submit them.</p>
-          </div>
-        )}
-        <div className="space-y-4">
-          {filtered.map((task) => (
-            <div key={task.id} className="bg-[#1B4F8A] rounded-xl p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="text-white font-bold text-lg">{task.title}</p>
-                  <p className="text-[#5BA4CF] text-sm">
-                    {task.profiles?.full_name || 'Unknown owner'}
-                  </p>
-                </div>
-                <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColor(task.status)}`}>
-                  {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-[#0A2342] rounded-lg p-3">
-                  <p className="text-[#5BA4CF] text-xs mb-1">Scheduled Date</p>
-                  <p className="text-white text-sm">{task.scheduled_date || 'Not set'}</p>
-                </div>
-                <div className="bg-[#0A2342] rounded-lg p-3">
-                  <p className="text-[#5BA4CF] text-xs mb-1">Price</p>
-                  <p className="text-[#E8A838] text-sm font-bold">{task.price > 0 ? `$${task.price}` : 'Quote needed'}</p>
-                </div>
-              </div>
-              {task.description && (
-                <div className="bg-[#0A2342] rounded-lg p-3 mb-4">
-                  <p className="text-[#5BA4CF] text-xs mb-1">Notes from owner</p>
-                  <p className="text-white text-sm">{task.description}</p>
-                </div>
-              )}
-              <div className="flex gap-2 flex-wrap">
-                {task.status === 'requested' && (
-                  <button onClick={() => updateStatus(task.id, 'confirmed')} className="bg-[#1A7A8A] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#065A82] transition-colors">
-                    Confirm
-                  </button>
-                )}
-                {task.status === 'confirmed' && (
-                  <button onClick={() => updateStatus(task.id, 'in_progress')} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors">
-                    Mark In Progress
-                  </button>
-                )}
-                {task.status === 'in_progress' && (
-                  <button onClick={() => updateStatus(task.id, 'completed')} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-                    Mark Complete
-                  </button>
-                )}
-                {task.status !== 'completed' && (
-                  <button onClick={() => updateStatus(task.id, 'requested')} className="text-[#5BA4CF] px-4 py-2 rounded-lg text-sm hover:text-white transition-colors">
-                    Reset
-                  </button>
-                )}
-              </div>
+        {view === 'calendar' && <TaskCalendar tasks={tasks} />}
+        {view === 'list' && (
+          <>
+            <div className="flex gap-2 flex-wrap mb-6">
+              {['all', 'requested', 'confirmed', 'in_progress', 'completed'].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setFilter(s)}
+                  className={`text-xs px-3 py-1 rounded-full font-semibold transition-colors ${filter === s ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
+                >
+                  {s === 'in_progress' ? 'In Progress' : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+            {filtered.length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-5xl mb-4">📋</div>
+                <p className="text-white font-bold text-lg">No requests yet</p>
+                <p className="text-[#5BA4CF] text-sm mt-1">Task requests will appear here when owners submit them.</p>
+              </div>
+            )}
+            <div className="space-y-4">
+              {filtered.map((task) => (
+                <div key={task.id} className="bg-[#1B4F8A] rounded-xl p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-white font-bold text-lg">{task.title}</p>
+                      <p className="text-[#5BA4CF] text-sm">
+                        {task.profiles?.full_name || 'Unknown owner'}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColor(task.status)}`}>
+                      {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-[#0A2342] rounded-lg p-3">
+                      <p className="text-[#5BA4CF] text-xs mb-1">Scheduled Date</p>
+                      <p className="text-white text-sm">{task.scheduled_date || 'Not set'}</p>
+                    </div>
+                    <div className="bg-[#0A2342] rounded-lg p-3">
+                      <p className="text-[#5BA4CF] text-xs mb-1">Price</p>
+                      <p className="text-[#E8A838] text-sm font-bold">{task.price > 0 ? `$${task.price}` : 'Quote needed'}</p>
+                    </div>
+                  </div>
+                  {task.description && (
+                    <div className="bg-[#0A2342] rounded-lg p-3 mb-4">
+                      <p className="text-[#5BA4CF] text-xs mb-1">Notes from owner</p>
+                      <p className="text-white text-sm">{task.description}</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {task.status === 'requested' && (
+                      <button onClick={() => updateStatus(task.id, 'confirmed')} className="bg-[#1A7A8A] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#065A82] transition-colors">
+                        Confirm
+                      </button>
+                    )}
+                    {task.status === 'confirmed' && (
+                      <button onClick={() => updateStatus(task.id, 'in_progress')} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors">
+                        Mark In Progress
+                      </button>
+                    )}
+                    {task.status === 'in_progress' && (
+                      <button onClick={() => updateStatus(task.id, 'completed')} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+                        Mark Complete
+                      </button>
+                    )}
+                    {task.status !== 'completed' && (
+                      <button onClick={() => updateStatus(task.id, 'requested')} className="text-[#5BA4CF] px-4 py-2 rounded-lg text-sm hover:text-white transition-colors">
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </main>
   )
