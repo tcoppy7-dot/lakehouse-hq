@@ -1,0 +1,222 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
+import { useRouter } from 'next/navigation'
+
+const TASK_MENU = [
+  { title: 'Boat Cover On', price: 50, icon: '🚤', description: 'We will put your boat cover on securely' },
+  { title: 'Boat Cover Off', price: 50, icon: '🚤', description: 'We will remove and store your boat cover' },
+  { title: 'Jet Ski Cover On', price: 25, icon: '🏄', description: 'Cover on for each jet ski' },
+  { title: 'Jet Ski Cover Off', price: 25, icon: '🏄', description: 'Cover off for each jet ski' },
+  { title: 'Patio Furniture Up', price: 35, icon: '🪑', description: 'Set up patio chairs and cushions' },
+  { title: 'Patio Furniture Down', price: 35, icon: '🪑', description: 'Store patio chairs and cushions' },
+  { title: 'Boat Fuel Top-Off', price: 0, icon: '⛽', description: 'Charged at actual cost of fuel' },
+  { title: 'Seasonal Open', price: 0, icon: '🌱', description: 'Full spring opening package, we will provide a quote' },
+  { title: 'Seasonal Close', price: 0, icon: '❄️', description: 'Full fall closing package, we will provide a quote' },
+  { title: 'General Maintenance', price: 0, icon: '🔧', description: 'Describe what you need, we will provide a quote' },
+]
+
+export default function Tasks() {
+  const [user, setUser] = useState<any>(null)
+  const [step, setStep] = useState<'menu' | 'schedule' | 'confirm' | 'submitted'>('menu')
+  const [selected, setSelected] = useState<any>(null)
+  const [date, setDate] = useState('')
+  const [notes, setNotes] = useState('')
+  const [tasks, setTasks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+      setUser(user)
+      const { data } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+      setTasks(data || [])
+      setLoading(false)
+    }
+    init()
+  }, [router])
+
+  const handleSubmit = async () => {
+    await supabase.from('tasks').insert({
+      owner_id: user.id,
+      title: selected.title,
+      description: notes,
+      scheduled_date: date,
+      status: 'requested',
+      price: selected.price,
+    })
+    const { data } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false })
+    setTasks(data || [])
+    setStep('submitted')
+  }
+
+  const resetFlow = () => {
+    setStep('menu')
+    setSelected(null)
+    setDate('')
+    setNotes('')
+  }
+
+  const statusColor = (status: string) => {
+    if (status === 'requested') return 'bg-[#E8A838] text-[#0A2342]'
+    if (status === 'confirmed') return 'bg-[#1A7A8A] text-white'
+    if (status === 'completed') return 'bg-green-600 text-white'
+    return 'bg-[#1B4F8A] text-white'
+  }
+
+  if (loading) return <div className="min-h-screen bg-[#0A2342] flex items-center justify-center"><p className="text-white">Loading...</p></div>
+
+  return (
+    <main className="min-h-screen bg-[#0A2342]">
+      <nav className="bg-[#1B4F8A] px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <a href="/dashboard" className="text-2xl">⚓</a>
+          <span className="text-white font-bold text-xl">Request a Task</span>
+        </div>
+        <a href="/dashboard" className="text-[#5BA4CF] hover:text-white text-sm transition-colors">Dashboard</a>
+      </nav>
+      <div className="px-6 py-8 max-w-2xl mx-auto">
+        {step === 'menu' && (
+          <div>
+            <h2 className="text-white text-xl font-bold mb-2">What do you need done?</h2>
+            <p className="text-[#5BA4CF] mb-6">Select a service to get started.</p>
+            <div className="space-y-3">
+              {TASK_MENU.map((task) => (
+                <button
+                  key={task.title}
+                  onClick={() => { setSelected(task); setStep('schedule') }}
+                  className="w-full bg-[#1B4F8A] rounded-xl p-4 flex items-center justify-between hover:bg-[#1A7A8A] transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{task.icon}</span>
+                    <div>
+                      <p className="text-white font-semibold">{task.title}</p>
+                      <p className="text-[#5BA4CF] text-sm">{task.description}</p>
+                    </div>
+                  </div>
+                  <span className="text-[#E8A838] font-bold text-sm ml-4 shrink-0">
+                    {task.price > 0 ? `$${task.price}` : 'Quote'}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {tasks.length > 0 && (
+              <div className="mt-10">
+                <h3 className="text-white font-bold text-lg mb-4">Your Requests</h3>
+                <div className="space-y-3">
+                  {tasks.map((task) => (
+                    <div key={task.id} className="bg-[#1B4F8A] rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-white font-semibold">{task.title}</p>
+                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColor(task.status)}`}>
+                          {task.status}
+                        </span>
+                      </div>
+                      <p className="text-[#5BA4CF] text-sm">{task.scheduled_date}</p>
+                      {task.description && <p className="text-[#5BA4CF] text-sm mt-1">{task.description}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {step === 'schedule' && selected && (
+          <div>
+            <button onClick={() => setStep('menu')} className="text-[#5BA4CF] hover:text-white text-sm mb-6 flex items-center gap-1 transition-colors">
+              Back to menu
+            </button>
+            <div className="bg-[#1B4F8A] rounded-xl p-4 mb-6 flex items-center gap-3">
+              <span className="text-2xl">{selected.icon}</span>
+              <div>
+                <p className="text-white font-bold">{selected.title}</p>
+                <p className="text-[#E8A838] text-sm font-semibold">{selected.price > 0 ? `$${selected.price}` : 'Quote provided after review'}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[#5BA4CF] text-sm mb-1 block">Preferred Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full bg-[#1B4F8A] text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                />
+              </div>
+              <div>
+                <label className="text-[#5BA4CF] text-sm mb-1 block">Notes for our team (optional)</label>
+                <textarea
+                  placeholder="Any special instructions or details..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  className="w-full bg-[#1B4F8A] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                />
+              </div>
+              <button
+                onClick={() => { if (date) setStep('confirm') }}
+                disabled={!date}
+                className="w-full bg-[#E8A838] text-[#0A2342] py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors disabled:opacity-40"
+              >
+                Review Request
+              </button>
+            </div>
+          </div>
+        )}
+        {step === 'confirm' && selected && (
+          <div>
+            <h2 className="text-white text-xl font-bold mb-6">Confirm your request</h2>
+            <div className="bg-[#1B4F8A] rounded-xl p-5 space-y-4 mb-6">
+              <div className="flex justify-between">
+                <span className="text-[#5BA4CF]">Service</span>
+                <span className="text-white font-semibold">{selected.title}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#5BA4CF]">Date</span>
+                <span className="text-white">{date}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#5BA4CF]">Price</span>
+                <span className="text-[#E8A838] font-bold">{selected.price > 0 ? `$${selected.price}` : 'Quote'}</span>
+              </div>
+              {notes && (
+                <div>
+                  <span className="text-[#5BA4CF] block mb-1">Notes</span>
+                  <span className="text-white">{notes}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={handleSubmit} className="flex-1 bg-[#E8A838] text-[#0A2342] py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors">
+                Submit Request
+              </button>
+              <button onClick={() => setStep('schedule')} className="text-[#5BA4CF] px-6 py-3 rounded-lg hover:text-white transition-colors">
+                Back
+              </button>
+            </div>
+          </div>
+        )}
+        {step === 'submitted' && (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">✅</div>
+            <h2 className="text-white text-2xl font-bold mb-2">Request submitted</h2>
+            <p className="text-[#5BA4CF] mb-8">We will confirm your request shortly.</p>
+            <button onClick={resetFlow} className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors">
+              Request Another Task
+            </button>
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
