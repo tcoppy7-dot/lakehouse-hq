@@ -21,6 +21,7 @@ export default function Tasks() {
   const [step, setStep] = useState<'menu' | 'schedule' | 'confirm' | 'submitted'>('menu')
   const [selected, setSelected] = useState<any>(null)
   const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,15 +43,39 @@ export default function Tasks() {
     init()
   }, [router])
 
+  const formatTime = (time: string) => {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const h = parseInt(hours)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const hour = h % 12 || 12
+    return `${hour}:${minutes} ${ampm}`
+  }
+
   const handleSubmit = async () => {
     await supabase.from('tasks').insert({
       owner_id: user.id,
       title: selected.title,
       description: notes,
       scheduled_date: date,
+      scheduled_time: time || null,
       status: 'requested',
       price: selected.price,
     })
+
+    await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ownerEmail: user.email,
+        taskTitle: selected.title,
+        scheduledDate: date,
+        scheduledTime: time ? formatTime(time) : 'No time specified',
+        price: selected.price,
+        notes,
+      })
+    })
+
     const { data } = await supabase
       .from('tasks')
       .select('*')
@@ -64,6 +89,7 @@ export default function Tasks() {
     setStep('menu')
     setSelected(null)
     setDate('')
+    setTime('')
     setNotes('')
   }
 
@@ -122,7 +148,9 @@ export default function Tasks() {
                           {task.status}
                         </span>
                       </div>
-                      <p className="text-[#5BA4CF] text-sm">{task.scheduled_date}</p>
+                      <p className="text-[#5BA4CF] text-sm">
+                        {task.scheduled_date}{task.scheduled_time ? ` at ${formatTime(task.scheduled_time)}` : ''}
+                      </p>
                       {task.description && <p className="text-[#5BA4CF] text-sm mt-1">{task.description}</p>}
                     </div>
                   ))}
@@ -133,7 +161,7 @@ export default function Tasks() {
         )}
         {step === 'schedule' && selected && (
           <div>
-            <button onClick={() => setStep('menu')} className="text-[#5BA4CF] hover:text-white text-sm mb-6 flex items-center gap-1 transition-colors">
+            <button onClick={() => setStep('menu')} className="text-[#5BA4CF] hover:text-white text-sm mb-6 transition-colors">
               Back to menu
             </button>
             <div className="bg-[#1B4F8A] rounded-xl p-4 mb-6 flex items-center gap-3">
@@ -154,7 +182,16 @@ export default function Tasks() {
                 />
               </div>
               <div>
-                <label className="text-[#5BA4CF] text-sm mb-1 block">Notes for our team (optional)</label>
+                <label className="text-[#5BA4CF] text-sm mb-1 block">Preferred Time <span className="text-[#5BA4CF] font-normal">(optional)</span></label>
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="w-full bg-[#1B4F8A] text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                />
+              </div>
+              <div>
+                <label className="text-[#5BA4CF] text-sm mb-1 block">Notes for our team <span className="text-[#5BA4CF] font-normal">(optional)</span></label>
                 <textarea
                   placeholder="Any special instructions or details..."
                   value={notes}
@@ -185,6 +222,12 @@ export default function Tasks() {
                 <span className="text-[#5BA4CF]">Date</span>
                 <span className="text-white">{date}</span>
               </div>
+              {time && (
+                <div className="flex justify-between">
+                  <span className="text-[#5BA4CF]">Time</span>
+                  <span className="text-white">{formatTime(time)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-[#5BA4CF]">Price</span>
                 <span className="text-[#E8A838] font-bold">{selected.price > 0 ? `$${selected.price}` : 'Quote'}</span>
@@ -210,7 +253,7 @@ export default function Tasks() {
           <div className="text-center py-16">
             <div className="text-6xl mb-4">✅</div>
             <h2 className="text-white text-2xl font-bold mb-2">Request submitted</h2>
-            <p className="text-[#5BA4CF] mb-8">We will confirm your request shortly.</p>
+            <p className="text-[#5BA4CF] mb-8">We will confirm your request shortly. Check your email for confirmation.</p>
             <button onClick={resetFlow} className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors">
               Request Another Task
             </button>
