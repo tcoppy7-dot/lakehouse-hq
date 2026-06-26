@@ -24,7 +24,7 @@ export default function Tasks() {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
-  const [isRecurring, setIsRecurring] = useState(false)
+const [isRecurring, setIsRecurring] = useState(false)
   const [intervalDays, setIntervalDays] = useState(14)
   const [endDate, setEndDate] = useState('')
   const [tasks, setTasks] = useState<any[]>([])
@@ -56,58 +56,23 @@ export default function Tasks() {
     return `${hour}:${minutes} ${ampm}`
   }
 
-  const generateRecurringTasks = async (userId: string) => {
-    const start = new Date(date)
-    const end = new Date(endDate)
-    const taskRows = []
-    let current = new Date(start)
-    while (current <= end) {
-      taskRows.push({
-        owner_id: userId,
-        title: selected.title,
-        description: notes,
-        scheduled_date: current.toISOString().split('T')[0],
-        scheduled_time: time || null,
-        status: 'requested',
-        price: selected.price,
-      })
-      current.setDate(current.getDate() + intervalDays)
-    }
-    await supabase.from('tasks').insert(taskRows)
-    await supabase.from('recurring_tasks').insert({
-      owner_id: userId,
+  const handleSubmit = async () => {
+    await supabase.from('tasks').insert({
+      owner_id: user.id,
       title: selected.title,
       description: notes,
-      interval_days: intervalDays,
-      start_date: date,
-      end_date: endDate,
+      scheduled_date: date,
       scheduled_time: time || null,
+      status: 'requested',
       price: selected.price,
-      status: 'active',
     })
-  }
-
-  const handleSubmit = async () => {
-    if (isRecurring && endDate) {
-      await generateRecurringTasks(user.id)
-    } else {
-      await supabase.from('tasks').insert({
-        owner_id: user.id,
-        title: selected.title,
-        description: notes,
-        scheduled_date: date,
-        scheduled_time: time || null,
-        status: 'requested',
-        price: selected.price,
-      })
-    }
 
     await fetch('/api/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ownerEmail: user.email,
-        taskTitle: selected.title + (isRecurring ? ' (Recurring)' : ''),
+        taskTitle: selected.title,
         scheduledDate: date,
         scheduledTime: time ? formatTime(time) : 'No time specified',
         price: selected.price,
@@ -130,9 +95,6 @@ export default function Tasks() {
     setDate('')
     setTime('')
     setNotes('')
-    setIsRecurring(false)
-    setIntervalDays(14)
-    setEndDate('')
   }
 
   const statusColor = (status: string) => {
@@ -242,47 +204,9 @@ export default function Tasks() {
                   className="w-full bg-[#1B4F8A] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
                 />
               </div>
-              {selected?.title === 'Lawn Mowing' && (
-                <div>
-                  <div className="flex items-center justify-between bg-[#1B4F8A] px-4 py-3 rounded-lg">
-                    <span className="text-white text-sm font-semibold">Make this recurring</span>
-                    <button
-                      onClick={() => setIsRecurring(!isRecurring)}
-                      className={`w-12 h-6 rounded-full transition-colors ${isRecurring ? 'bg-[#1A7A8A]' : 'bg-[#0A2342]'}`}
-                    >
-                      <div className={`w-5 h-5 bg-white rounded-full transition-transform mx-0.5 ${isRecurring ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                  {isRecurring && (
-                    <div className="mt-3 space-y-3">
-                      <div>
-                        <label className="text-[#5BA4CF] text-sm mb-1 block">Mow every</label>
-                        <select
-                          value={intervalDays}
-                          onChange={(e) => setIntervalDays(Number(e.target.value))}
-                          className="w-full bg-[#1B4F8A] text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
-                        >
-                          <option value={7}>7 days (weekly)</option>
-                          <option value={14}>14 days (every 2 weeks)</option>
-                          <option value={21}>21 days (every 3 weeks)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[#5BA4CF] text-sm mb-1 block">End date</label>
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          className="w-full bg-[#1B4F8A] text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
               <button
                 onClick={() => { if (date) setStep('confirm') }}
-                disabled={!date || (isRecurring && !endDate)}
+                disabled={!date}
                 className="w-full bg-[#E8A838] text-[#0A2342] py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors disabled:opacity-40"
               >
                 Review Request
@@ -296,24 +220,12 @@ export default function Tasks() {
             <div className="bg-[#1B4F8A] rounded-xl p-5 space-y-4 mb-6">
               <div className="flex justify-between">
                 <span className="text-[#5BA4CF]">Service</span>
-                <span className="text-white font-semibold">{selected.title}{isRecurring ? ' (Recurring)' : ''}</span>
+                <span className="text-white font-semibold">{selected.title}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#5BA4CF]">Start Date</span>
+                <span className="text-[#5BA4CF]">Date</span>
                 <span className="text-white">{date}</span>
               </div>
-              {isRecurring && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-[#5BA4CF]">Frequency</span>
-                    <span className="text-white">Every {intervalDays} days</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#5BA4CF]">End Date</span>
-                    <span className="text-white">{endDate}</span>
-                  </div>
-                </>
-              )}
               {time && (
                 <div className="flex justify-between">
                   <span className="text-[#5BA4CF]">Time</span>
