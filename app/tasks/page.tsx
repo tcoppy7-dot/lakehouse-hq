@@ -214,6 +214,12 @@ export default function Tasks() {
                           {task.scheduled_date}{task.scheduled_time ? ` at ${formatTime(task.scheduled_time)}` : ''}
                         </p>
                         {task.description && <p className="text-[#5BA4CF] text-sm mt-1">{task.description}</p>}
+                        {task.photo_url && (
+                          <div className="mt-3">
+                            <p className="text-[#5BA4CF] text-xs mb-1">Completion photo</p>
+                            <img src={task.photo_url} alt="Completion" className="rounded-lg w-full max-h-40 object-cover" />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

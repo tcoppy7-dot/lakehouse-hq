@@ -10,6 +10,7 @@ export default function OperatorDashboard() {
   const [filter, setFilter] = useState('all')
   const [authorized, setAuthorized] = useState(false)
   const [view, setView] = useState<'list' | 'calendar'>('list')
+  const [uploading, setUploading] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -49,6 +50,26 @@ export default function OperatorDashboard() {
   const updateStatus = async (id: string, status: string) => {
     await supabase.from('tasks').update({ status }).eq('id', id)
     await loadTasks()
+  }
+
+  const handlePhotoUpload = async (taskId: string, file: File) => {
+    setUploading(taskId)
+    const ext = file.name.split('.').pop()
+    const path = `${taskId}.${ext}`
+    const { error: uploadError } = await supabase.storage
+      .from('task-photos')
+      .upload(path, file, { upsert: true })
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      setUploading(null)
+      return
+    }
+    const { data: { publicUrl } } = supabase.storage
+      .from('task-photos')
+      .getPublicUrl(path)
+    await supabase.from('tasks').update({ photo_url: publicUrl }).eq('id', taskId)
+    await loadTasks()
+    setUploading(null)
   }
 
   const statusColor = (status: string) => {
@@ -146,6 +167,12 @@ export default function OperatorDashboard() {
                       <p className="text-white text-sm">{task.description}</p>
                     </div>
                   )}
+                  {task.photo_url && (
+                    <div className="mb-4">
+                      <p className="text-[#5BA4CF] text-xs mb-2">Completion photo</p>
+                      <img src={task.photo_url} alt="Completion" className="rounded-lg w-full max-h-48 object-cover" />
+                    </div>
+                  )}
                   <div className="flex gap-2 flex-wrap">
                     {task.status === 'requested' && (
                       <button onClick={() => updateStatus(task.id, 'confirmed')} className="bg-[#1A7A8A] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#065A82] transition-colors">
@@ -161,6 +188,20 @@ export default function OperatorDashboard() {
                       <button onClick={() => updateStatus(task.id, 'completed')} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
                         Mark Complete
                       </button>
+                    )}
+                    {task.status === 'completed' && (
+                      <label className="cursor-pointer bg-[#1A7A8A] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#065A82] transition-colors">
+                        {uploading === task.id ? 'Uploading...' : task.photo_url ? 'Replace Photo' : 'Upload Photo'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handlePhotoUpload(task.id, file)
+                          }}
+                        />
+                      </label>
                     )}
                     {task.status !== 'completed' && (
                       <button onClick={() => updateStatus(task.id, 'requested')} className="text-[#5BA4CF] px-4 py-2 rounded-lg text-sm hover:text-white transition-colors">
