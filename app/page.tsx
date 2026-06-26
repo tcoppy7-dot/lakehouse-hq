@@ -130,6 +130,7 @@ export default function Home() {
                 { task: 'Jet Ski Cover On / Off', price: '$25' },
                 { task: 'Patio Furniture Up / Down', price: '$35' },
                 { task: 'Boat Fuel Top-Off', price: 'Actual cost' },
+                { task: 'Lawn Mowing', price: 'Quote' },
                 { task: 'Seasonal Open Package', price: 'Quote' },
                 { task: 'Seasonal Close Package', price: 'Quote' },
               ].map((item, i) => (

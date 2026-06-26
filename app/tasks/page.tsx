@@ -14,7 +14,7 @@ const TASK_MENU = [
   { title: 'Boat Fuel Top-Off', price: 0, icon: '⛽', description: 'Charged at actual cost of fuel' },
   { title: 'Seasonal Open', price: 0, icon: '🌱', description: 'Full spring opening package, we will provide a quote' },
   { title: 'Seasonal Close', price: 0, icon: '❄️', description: 'Full fall closing package, we will provide a quote' },
-  { title: 'Lawn Mowing', price: 75, icon: '🌿', description: 'Lawn mowed and clippings cleared' },
+  { title: 'Lawn Mowing', price: 0, icon: '🌿', description: 'Lawn mowed and clippings cleared' },
   { title: 'General Maintenance', price: 0, icon: '🔧', description: 'Describe what you need, we will provide a quote' },
 ]
 
