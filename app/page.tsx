@@ -86,7 +86,7 @@ export default function Home() {
             </ul>
           </div>
           <div className="relative h-80 sm:h-96 rounded-2xl overflow-hidden">
-            <Image src="/dock.jpg" alt="Relaxing at the lake" fill className="object-cover" />
+            <Image src="/dock.png" alt="Relaxing at the lake" fill className="object-cover" />
           </div>
         </div>
       </section>
@@ -171,7 +171,9 @@ export default function Home() {
           <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" />
           <div className="absolute inset-0" style={{ background: 'rgba(13,31,53,0.85)' }} />
           <div className="relative z-10">
-            <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain mx-auto mb-6" />
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain mx-auto mb-6" />
+            </div>
             <h2 className="text-3xl font-bold text-white mb-4">Ready to enjoy the lake?</h2>
             <p className="mb-8" style={{ color: '#A8D5DC' }}>Join lakehouse owners who have handed off the hassle.</p>
             <Link href="/signup" className="px-8 py-4 rounded-xl text-lg font-bold transition-colors inline-block" style={{ backgroundColor: '#C9963A', color: '#0D1F35' }}>
