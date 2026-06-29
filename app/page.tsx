@@ -3,194 +3,194 @@ import Image from 'next/image'
 
 export default function Home() {
   return (
-    <main className="min-h-screen" style={{ backgroundColor: '#0D1F35' }}>
+    <main style={{ fontFamily: 'var(--font-jakarta), sans-serif', backgroundColor: '#0A2342' }}>
 
-      <nav className="px-6 py-5 flex items-center justify-between max-w-6xl mx-auto">
-        <Image src="/logo.png" alt="Lakehouse HQ" width={180} height={60} className="object-contain" />
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="text-[#A8D5DC] hover:text-white text-sm transition-colors">
+      {/* Nav */}
+      <nav className="px-8 py-6 flex items-center justify-between max-w-7xl mx-auto">
+        <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" />
+        <div className="flex items-center gap-6">
+          <Link href="/login" className="text-sm font-medium transition-colors" style={{ color: '#A8D5DC' }}>
             Sign In
           </Link>
-          <Link href="/signup" className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors" style={{ backgroundColor: '#C9963A', color: '#0D1F35' }}>
+          <Link href="/signup" className="px-5 py-2.5 rounded-full text-sm font-semibold transition-colors" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
             Get Started
           </Link>
         </div>
       </nav>
 
-      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+      {/* Hero */}
+      <section className="relative min-h-[92vh] flex items-end pb-24 overflow-hidden">
         <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" priority />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,31,53,0.5) 0%, rgba(13,31,53,0.7) 100%)' }} />
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-          <div className="inline-block text-xs font-semibold px-3 py-1 rounded-full mb-6 tracking-wider uppercase" style={{ backgroundColor: 'rgba(74,147,155,0.3)', color: '#A8D5DC', border: '1px solid rgba(74,147,155,0.5)' }}>
-            Now serving your lake
-          </div>
-          <h1 className="text-5xl sm:text-7xl font-bold text-white mb-6 leading-tight">
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.95) 0%, rgba(10,35,66,0.5) 60%, rgba(10,35,66,0.2) 100%)' }} />
+        <div className="relative z-10 px-8 max-w-7xl mx-auto w-full">
+          <p className="text-sm font-medium tracking-widest uppercase mb-6" style={{ color: '#1A7A8A' }}>Lake property services</p>
+          <h1 className="text-6xl sm:text-8xl font-bold text-white mb-6 leading-none tracking-tight max-w-4xl">
             Your lakehouse,<br />
-            <span style={{ color: '#C9963A' }}>handled.</span>
+            <span style={{ color: '#E8A838' }}>taken care of.</span>
           </h1>
-          <p className="text-xl mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: '#A8D5DC' }}>
-            Lakehouse HQ combines a smart property app with a real local service team. Request tasks, track your property, and enjoy the lake without the stress.
+          <p className="text-lg sm:text-xl mb-10 max-w-xl leading-relaxed font-light" style={{ color: '#A8D5DC' }}>
+            Lakehouse HQ is a local property service for lake homeowners who want to enjoy their time on the water, not spend it managing it.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup" className="px-8 py-4 rounded-xl text-lg font-bold transition-colors" style={{ backgroundColor: '#C9963A', color: '#0D1F35' }}>
-              Get Started for $250/mo
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/signup" className="px-8 py-3.5 rounded-full text-base font-semibold transition-colors inline-block text-center" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
+              Get started
             </Link>
-            <Link href="/login" className="px-8 py-4 rounded-xl text-lg font-semibold transition-colors text-white" style={{ backgroundColor: 'rgba(74,147,155,0.3)', border: '1px solid rgba(74,147,155,0.5)' }}>
-              Sign In
+            <Link href="#how-it-works" className="px-8 py-3.5 rounded-full text-base font-medium transition-colors inline-block text-center border" style={{ borderColor: 'rgba(168,213,220,0.3)', color: '#A8D5DC' }}>
+              See how it works
             </Link>
           </div>
-          <p className="text-sm mt-4" style={{ color: '#A8D5DC' }}>No contracts. Cancel anytime.</p>
         </div>
       </section>
 
-      <section className="px-6 py-12 max-w-4xl mx-auto">
-        <div className="grid grid-cols-3 gap-6 rounded-2xl p-8" style={{ backgroundColor: '#162D44' }}>
+      {/* How it works */}
+      <section id="how-it-works" className="px-8 py-28 max-w-7xl mx-auto">
+        <div className="mb-16">
+          <p className="text-sm font-medium tracking-widest uppercase mb-4" style={{ color: '#1A7A8A' }}>The process</p>
+          <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight">Simple from day one.</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
           {[
-            { number: '$250', label: 'Per month', sub: 'Full app access included' },
-            { number: '$50', label: 'Boat cover on/off', sub: 'Fixed price, no surprises' },
-            { number: '24hr', label: 'Response time', sub: 'For all service requests' },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-3xl font-bold" style={{ color: '#C9963A' }}>{stat.number}</p>
-              <p className="text-white font-semibold text-sm mt-1">{stat.label}</p>
-              <p className="text-xs mt-1" style={{ color: '#A8D5DC' }}>{stat.sub}</p>
+            { num: '01', title: 'Sign up', desc: 'Create your account and tell us about your property. Takes five minutes.' },
+            { num: '02', title: 'Request a service', desc: 'Pick what you need from our menu and choose a date. We confirm within 24 hours.' },
+            { num: '03', title: 'We handle it', desc: 'Our team shows up, does the work, and sends you a photo when it is done.' },
+          ].map((item) => (
+            <div key={item.num}>
+              <p className="text-5xl font-bold mb-6 leading-none" style={{ color: '#1A7A8A' }}>{item.num}</p>
+              <h3 className="text-white font-semibold text-xl mb-3">{item.title}</h3>
+              <p className="leading-relaxed font-light" style={{ color: '#A8D5DC' }}>{item.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="px-6 py-16 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-4xl font-bold text-white mb-6 leading-tight">
-              Stop managing.<br />
-              <span style={{ color: '#4A939B' }}>Start enjoying.</span>
-            </h2>
-            <p className="text-lg mb-6 leading-relaxed" style={{ color: '#A8D5DC' }}>
-              Lakehouse ownership should feel like a reward, not a second job. We handle the tasks so you can focus on making memories on the water.
-            </p>
-            <ul className="space-y-3">
-              {[
-                'Request services with a tap',
-                'Get photo confirmation every time',
-                'Track your property from anywhere',
-                'Share packing lists with guests',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#4A939B' }}>
-                    <span className="text-white text-xs font-bold">✓</span>
-                  </div>
-                  <span className="text-white">{item}</span>
-                </li>
-              ))}
-            </ul>
+      {/* Services */}
+      <section className="py-28" style={{ backgroundColor: '#060F1C' }}>
+        <div className="px-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-16 items-start mb-20">
+            <div>
+              <p className="text-sm font-medium tracking-widest uppercase mb-4" style={{ color: '#1A7A8A' }}>What we do</p>
+              <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight">Everything your lakehouse needs, handled.</h2>
+            </div>
+            <div className="sm:pt-12">
+              <p className="text-lg font-light leading-relaxed" style={{ color: '#A8D5DC' }}>
+                From opening weekend to closing day, we take care of the tasks that eat up your time and peace of mind.
+              </p>
+            </div>
           </div>
-          <div className="relative h-80 sm:h-96 rounded-2xl overflow-hidden">
-            <Image src="/dock.png" alt="Relaxing at the lake" fill className="object-cover" />
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-16 max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white mb-3">Everything your lakehouse needs</h2>
-          <p style={{ color: '#A8D5DC' }}>One app. One team. Total peace of mind.</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[
-            { icon: '🏡', title: 'Property Hub', desc: 'WiFi, access codes, emergency contacts, and house rules all in one secure place.' },
-            { icon: '🔧', title: 'Task Requests', desc: 'Request services from a fixed price menu. We show up, you relax.' },
-            { icon: '📸', title: 'Photo Confirmation', desc: 'Every completed job includes a photo so you always know it got done.' },
-            { icon: '📦', title: 'Inventory Tracker', desc: 'Know exactly what is at the house, what needs restocking, and what is missing.' },
-            { icon: '🚤', title: 'Boat and Watercraft', desc: 'Track your boat details, slip number, and jet ski info all in one place.' },
-            { icon: '🧳', title: 'Trip Packing Lists', desc: 'Send guests a shareable checklist before they arrive. No app account needed.' },
-          ].map((feature) => (
-            <div key={feature.title} className="rounded-2xl p-6 flex gap-4" style={{ backgroundColor: '#162D44' }}>
-              <span className="text-3xl shrink-0">{feature.icon}</span>
-              <div>
-                <h3 className="text-white font-bold mb-1">{feature.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#A8D5DC' }}>{feature.desc}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px" style={{ backgroundColor: 'rgba(168,213,220,0.1)' }}>
+            {[
+              { title: 'Boat and Jet Ski Covers', desc: 'On and off at the start and end of every season, or whenever you need it.' },
+              { title: 'Seasonal Open and Close', desc: 'We prepare your property for the season and button it up at the end. Full checklist, photo documentation.' },
+              { title: 'Lawn and Grounds', desc: 'Regular mowing and basic upkeep so the property always looks right.' },
+              { title: 'Patio and Dock Setup', desc: 'Furniture out in spring, stored in fall. Dock accessories managed all season.' },
+              { title: 'Inventory Checks', desc: 'We verify supplies are stocked before your guests arrive so nothing is missing.' },
+              { title: 'Custom Requests', desc: 'Need something done that is not on the list? Just ask and we will handle it.' },
+            ].map((service) => (
+              <div key={service.title} className="p-8" style={{ backgroundColor: '#060F1C' }}>
+                <h3 className="text-white font-semibold text-lg mb-3">{service.title}</h3>
+                <p className="text-sm leading-relaxed font-light" style={{ color: '#A8D5DC' }}>{service.desc}</p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="px-6 py-16 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 items-center">
-          <div className="relative h-80 sm:h-96 rounded-2xl overflow-hidden">
-            <Image src="/boats.jpg" alt="Lake boats" fill className="object-cover" />
+      {/* Trust */}
+      <section className="px-8 py-28 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-16 items-center">
+          <div className="relative h-96 rounded-2xl overflow-hidden">
+            <Image src="/service.png" alt="Service in action" fill className="object-cover" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-white mb-3">Simple, transparent pricing</h2>
-            <p className="mb-6" style={{ color: '#A8D5DC' }}>Fixed prices for predictable tasks. No surprises, no negotiating.</p>
-            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#162D44' }}>
+            <p className="text-sm font-medium tracking-widest uppercase mb-4" style={{ color: '#1A7A8A' }}>Why it works</p>
+            <h2 className="text-4xl font-bold text-white mb-10 leading-tight">You will always know it got done.</h2>
+            <div className="space-y-8">
               {[
-                { task: 'Boat Cover On / Off', price: '$50' },
-                { task: 'Jet Ski Cover On / Off', price: '$25' },
-                { task: 'Patio Furniture Up / Down', price: '$35' },
-                { task: 'Boat Fuel Top-Off', price: 'Actual cost' },
-                { task: 'Lawn Mowing', price: 'Quote' },
-                { task: 'Seasonal Open Package', price: 'Quote' },
-                { task: 'Seasonal Close Package', price: 'Quote' },
-              ].map((item, i) => (
-                <div key={item.task} className="flex items-center justify-between px-5 py-3" style={{ backgroundColor: i % 2 === 0 ? '#162D44' : '#0D1F35' }}>
-                  <span className="text-white text-sm">{item.task}</span>
-                  <span className="font-bold text-sm" style={{ color: '#C9963A' }}>{item.price}</span>
+                { title: 'Photo confirmation on every job', desc: 'Every completed task includes a photo sent directly to you. No wondering if it happened.' },
+                { title: 'Fast response, every time', desc: 'We confirm service requests within 24 hours and show up when we say we will.' },
+                { title: 'One team, one number', desc: 'You deal with one person who knows your property. Not a call center, not a rotating crew.' },
+              ].map((item) => (
+                <div key={item.title} className="flex gap-4">
+                  <div className="w-1 rounded-full shrink-0 mt-1" style={{ backgroundColor: '#1A7A8A', minHeight: '100%' }} />
+                  <div>
+                    <p className="text-white font-semibold mb-1">{item.title}</p>
+                    <p className="text-sm font-light leading-relaxed" style={{ color: '#A8D5DC' }}>{item.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
-            <p className="text-xs mt-3" style={{ color: '#A8D5DC' }}>All tasks require an active $250/month subscription.</p>
           </div>
         </div>
       </section>
 
-      <section className="px-6 py-16 max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-white mb-3">How it works</h2>
-          <p style={{ color: '#A8D5DC' }}>Three steps to a stress free lakehouse.</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {[
-            { step: '01', title: 'Sign up', desc: 'Create your account and add your lakehouse details in the Property Hub.' },
-            { step: '02', title: 'Request a task', desc: 'Pick a service from the menu, choose a date and time, and submit.' },
-            { step: '03', title: 'We handle it', desc: 'Our team shows up, gets it done, and sends you a photo confirmation.' },
-          ].map((item) => (
-            <div key={item.step} className="text-center">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#C9963A' }}>
-                <span className="font-bold" style={{ color: '#0D1F35' }}>{item.step}</span>
+      {/* Pricing */}
+      <section className="py-28" style={{ backgroundColor: '#060F1C' }}>
+        <div className="px-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-16 items-start">
+            <div>
+              <p className="text-sm font-medium tracking-widest uppercase mb-4" style={{ color: '#1A7A8A' }}>Pricing</p>
+              <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6 leading-tight">Simple pricing, no surprises.</h2>
+              <p className="text-lg font-light leading-relaxed mb-10" style={{ color: '#A8D5DC' }}>
+                A flat monthly membership covers your app access and locks in your service rates. Tasks are priced upfront so you always know what you are paying.
+              </p>
+              <div className="p-6 rounded-2xl mb-6" style={{ backgroundColor: '#0A2342' }}>
+                <p className="text-5xl font-bold mb-1" style={{ color: '#E8A838' }}>$250</p>
+                <p className="text-white font-medium">per month</p>
+                <p className="text-sm font-light mt-3" style={{ color: '#A8D5DC' }}>Includes full app access, photo documentation, priority scheduling, and direct communication with your service team.</p>
               </div>
-              <h3 className="text-white font-bold mb-2 text-lg">{item.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: '#A8D5DC' }}>{item.desc}</p>
+              <Link href="/signup" className="px-8 py-3.5 rounded-full text-base font-semibold transition-colors inline-block" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
+                Get started
+              </Link>
             </div>
-          ))}
+            <div>
+              <div className="divide-y" style={{ borderColor: 'rgba(168,213,220,0.15)' }}>
+                {[
+                  { task: 'Boat Cover On or Off', price: '$50' },
+                  { task: 'Jet Ski Cover On or Off', price: '$25' },
+                  { task: 'Patio Furniture Setup or Storage', price: '$35' },
+                  { task: 'Lawn Mowing', price: 'Quote' },
+                  { task: 'Seasonal Open Package', price: 'Quote' },
+                  { task: 'Seasonal Close Package', price: 'Quote' },
+                  { task: 'Custom Tasks', price: 'Quote' },
+                ].map((item) => (
+                  <div key={item.task} className="flex items-center justify-between py-5">
+                    <span className="font-light" style={{ color: '#A8D5DC' }}>{item.task}</span>
+                    <span className="font-semibold" style={{ color: '#E8A838' }}>{item.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="px-6 py-20 max-w-3xl mx-auto text-center">
-        <div className="relative rounded-3xl overflow-hidden p-12">
-          <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" />
-          <div className="absolute inset-0" style={{ background: 'rgba(13,31,53,0.85)' }} />
-          <div className="relative z-10">
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain mx-auto mb-6" />
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-4">Ready to enjoy the lake?</h2>
-            <p className="mb-8" style={{ color: '#A8D5DC' }}>Join lakehouse owners who have handed off the hassle.</p>
-            <Link href="/signup" className="px-8 py-4 rounded-xl text-lg font-bold transition-colors inline-block" style={{ backgroundColor: '#C9963A', color: '#0D1F35' }}>
-              Get Started Today
+      {/* Final CTA */}
+      <section className="px-8 py-28 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6 leading-tight">Ready to stop managing and start enjoying?</h2>
+            <p className="text-lg font-light mb-10 leading-relaxed" style={{ color: '#A8D5DC' }}>
+              Tell us about your property and we will reach out within one business day.
+            </p>
+            <Link href="/signup" className="px-8 py-3.5 rounded-full text-base font-semibold transition-colors inline-block" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
+              Get started today
             </Link>
           </div>
+          <div className="relative h-80 rounded-2xl overflow-hidden">
+            <Image src="/dock.png" alt="Lakehouse dock" fill className="object-cover" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.6) 0%, rgba(10,35,66,0.1) 100%)' }} />
+          </div>
         </div>
       </section>
 
-      <footer className="px-6 py-8" style={{ borderTop: '1px solid #162D44' }}>
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Footer */}
+      <footer className="px-8 py-10 border-t" style={{ borderColor: 'rgba(168,213,220,0.1)' }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <Image src="/logo.png" alt="Lakehouse HQ" width={120} height={40} className="object-contain" />
-          <p className="text-sm" style={{ color: '#A8D5DC' }}>Your lakehouse, handled.</p>
+          <p className="text-sm font-light" style={{ color: '#A8D5DC' }}>Your lakehouse, taken care of.</p>
           <div className="flex gap-6">
-            <Link href="/login" className="text-sm transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Sign In</Link>
-            <Link href="/signup" className="text-sm transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Sign Up</Link>
+            <Link href="/login" className="text-sm font-light transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Sign In</Link>
+            <Link href="/signup" className="text-sm font-light transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Sign Up</Link>
           </div>
         </div>
       </footer>
