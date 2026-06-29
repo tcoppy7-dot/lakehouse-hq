@@ -26,7 +26,7 @@ export default function Login() {
   return (
     <main className="min-h-screen flex" style={{ fontFamily: 'var(--font-jakarta), sans-serif' }}>
       <div className="hidden lg:block lg:w-1/2 relative">
-        <Image src="/wittelake.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" sizes="50vw" priority />
+        <Image src="/wittelake.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" sizes="(max-width: 768px) 100vw, 50vw" sizes="50vw" priority />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(10,35,66,0.3) 0%, rgba(10,35,66,0.1) 100%)' }} />
         <div className="absolute bottom-10 left-10">
           <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" loading="eager" loading="eager" />
