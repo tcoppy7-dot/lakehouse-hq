@@ -31,16 +31,16 @@ export default function Signup() {
   return (
     <main className="min-h-screen flex" style={{ fontFamily: 'var(--font-jakarta), sans-serif' }}>
       <div className="hidden lg:block lg:w-1/2 relative">
-        <Image src="/wittelake.jpg" alt="Lake sunset" fill className="object-cover" />
+        <Image src="/wittelake.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" sizes="50vw" priority />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(10,35,66,0.3) 0%, rgba(10,35,66,0.1) 100%)' }} />
         <div className="absolute bottom-10 left-10">
-          <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" />
+          <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" loading="eager" loading="eager" />
         </div>
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center px-8 py-12" style={{ backgroundColor: '#0A2342' }}>
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-10">
-            <Image src="/logo.png" alt="Lakehouse HQ" width={140} height={48} className="object-contain" />
+            <Image src="/logo.png" alt="Lakehouse HQ" width={140} height={48} className="object-contain" loading="eager" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Get started.</h1>
           <p className="text-sm font-light mb-10" style={{ color: '#A8D5DC' }}>Create your Lakehouse HQ account.</p>
