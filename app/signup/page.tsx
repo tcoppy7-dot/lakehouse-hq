@@ -34,7 +34,7 @@ export default function Signup() {
         <Image src="/wittelake.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" sizes="(max-width: 768px) 100vw, 50vw" sizes="50vw" priority />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(10,35,66,0.3) 0%, rgba(10,35,66,0.1) 100%)' }} />
         <div className="absolute bottom-10 left-10">
-          <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" loading="eager" loading="eager" />
+          <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" loading="eager" />
         </div>
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center px-8 py-12" style={{ backgroundColor: '#0A2342' }}>
