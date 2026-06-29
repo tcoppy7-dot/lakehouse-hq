@@ -5,9 +5,8 @@ export default function Home() {
   return (
     <main style={{ fontFamily: 'var(--font-jakarta), sans-serif', backgroundColor: '#0A2342' }}>
 
-      {/* Nav */}
       <nav className="px-8 py-6 flex items-center justify-between max-w-7xl mx-auto">
-        <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" loading="eager" />
+        <Image src="/logo.png" alt="Lakehouse HQ" width={160} height={54} className="object-contain" />
         <div className="flex items-center gap-6">
           <Link href="/login" className="text-sm font-medium transition-colors" style={{ color: '#A8D5DC' }}>
             Sign In
@@ -18,9 +17,8 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="relative min-h-[92vh] flex items-end pb-24 overflow-hidden">
-        <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" sizes="(max-width: 768px) 100vw, 50vw" priority />
+        <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" priority />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.95) 0%, rgba(10,35,66,0.5) 60%, rgba(10,35,66,0.2) 100%)' }} />
         <div className="relative z-10 px-8 max-w-7xl mx-auto w-full">
           <p className="text-sm font-medium tracking-widest uppercase mb-6" style={{ color: '#1A7A8A' }}>Lake property services</p>
@@ -42,7 +40,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
       <section id="how-it-works" className="px-8 py-28 max-w-7xl mx-auto">
         <div className="mb-16">
           <p className="text-sm font-medium tracking-widest uppercase mb-4" style={{ color: '#1A7A8A' }}>The process</p>
@@ -63,7 +60,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Services */}
       <section className="py-28" style={{ backgroundColor: '#060F1C' }}>
         <div className="px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-16 items-start mb-20">
@@ -95,11 +91,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust */}
       <section className="px-8 py-28 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-16 items-center">
           <div className="relative h-96 rounded-2xl overflow-hidden">
-            <Image src="/service.png" alt="Service in action" fill className="object-cover" sizes="100vw" sizes="(max-width: 768px) 100vw, 50vw" />
+            <Image src="/service.png" alt="Service in action" fill className="object-cover" sizes="50vw" />
           </div>
           <div>
             <p className="text-sm font-medium tracking-widest uppercase mb-4" style={{ color: '#1A7A8A' }}>Why it works</p>
@@ -123,7 +118,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing */}
       <section className="py-28" style={{ backgroundColor: '#060F1C' }}>
         <div className="px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-16 items-start">
@@ -164,7 +158,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA */}
       <section className="px-8 py-28 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 items-center">
           <div>
@@ -177,16 +170,15 @@ export default function Home() {
             </Link>
           </div>
           <div className="relative h-80 rounded-2xl overflow-hidden">
-            <Image src="/dock.png" alt="Lakehouse dock" fill className="object-cover" sizes="100vw" sizes="(max-width: 768px) 100vw, 50vw" />
+            <Image src="/dock.png" alt="Lakehouse dock" fill className="object-cover" sizes="50vw" />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.6) 0%, rgba(10,35,66,0.1) 100%)' }} />
           </div>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="px-8 py-10 border-t" style={{ borderColor: 'rgba(168,213,220,0.1)' }}>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Image src="/logo.png" alt="Lakehouse HQ" width={120} height={40} className="object-contain" loading="eager" />
+          <Image src="/logo.png" alt="Lakehouse HQ" width={120} height={40} className="object-contain" />
           <p className="text-sm font-light" style={{ color: '#A8D5DC' }}>Your lakehouse, taken care of.</p>
           <div className="flex gap-6">
             <Link href="/login" className="text-sm font-light transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Sign In</Link>
