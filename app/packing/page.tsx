@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 export default function PackingLists() {
   const [user, setUser] = useState<any>(null)
@@ -77,41 +78,46 @@ export default function PackingLists() {
   if (loading) return <div className="min-h-screen bg-[#0A2342] flex items-center justify-center"><p className="text-white">Loading...</p></div>
 
   return (
-    <main className="min-h-screen bg-[#0A2342]">
-      <nav className="bg-[#1B4F8A] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <a href="/dashboard" className="text-2xl">⚓</a>
-          <span className="text-white font-bold text-xl">Packing Lists</span>
-        </div>
-        <a href="/dashboard" className="text-[#5BA4CF] hover:text-white text-sm transition-colors">Dashboard</a>
+    <main className="min-h-screen bg-[#0A2342]" style={{ fontFamily: 'var(--font-jakarta), sans-serif' }}>
+      <nav className="px-8 py-5 flex items-center justify-between border-b border-[#1B4F8A]">
+        <Image src="/logo.png" alt="Lakehouse HQ" width={140} height={48} className="object-contain" />
+        <a href="/dashboard" className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Dashboard</a>
       </nav>
-      <div className="px-6 py-8 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+
+      <div className="px-8 py-10 max-w-4xl mx-auto">
+        <div className="flex items-start justify-between mb-10">
           <div>
-            <h2 className="text-white text-xl font-bold">Trip Packing Lists</h2>
-            <p className="text-[#5BA4CF] text-sm">Share with guests before they arrive</p>
+            <p className="text-sm font-medium tracking-widest uppercase mb-3" style={{ color: '#1A7A8A' }}>Guests</p>
+            <h1 className="text-4xl font-bold text-white">Packing Lists</h1>
+            <p className="mt-2 font-light" style={{ color: '#A8D5DC' }}>Share with guests before they arrive.</p>
           </div>
           {!adding && (
-            <button onClick={() => setAdding(true)} className="bg-[#E8A838] text-[#0A2342] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#d4962e] transition-colors">
+            <button
+              onClick={() => setAdding(true)}
+              className="px-5 py-2.5 rounded-full font-semibold text-sm transition-colors"
+              style={{ backgroundColor: '#E8A838', color: '#0A2342' }}
+            >
               New List
             </button>
           )}
         </div>
+
         {adding && (
-          <div className="bg-[#1B4F8A] rounded-xl p-5 mb-6 space-y-4">
-            <h3 className="text-white font-bold">Create Packing List</h3>
+          <div className="rounded-2xl p-6 mb-8 space-y-5" style={{ backgroundColor: '#0D2B4E' }}>
+            <h3 className="text-white font-bold text-lg">Create Packing List</h3>
             <div>
-              <label className="text-[#5BA4CF] text-sm mb-1 block">List Title</label>
+              <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>List Title</label>
               <input
                 type="text"
                 placeholder="Memorial Day Weekend, Summer Trip..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-[#0A2342] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                className="w-full text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                style={{ backgroundColor: '#0A2342' }}
               />
             </div>
             <div>
-              <label className="text-[#5BA4CF] text-sm mb-2 block">Items</label>
+              <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Items</label>
               <div className="space-y-2">
                 {items.map((item, index) => (
                   <div key={index} className="flex gap-2 items-center">
@@ -120,91 +126,103 @@ export default function PackingLists() {
                       placeholder={'Item ' + (index + 1)}
                       value={item.text}
                       onChange={(e) => updateItem(index, e.target.value)}
-                      className="flex-1 bg-[#0A2342] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                      className="flex-1 text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                      style={{ backgroundColor: '#0A2342' }}
                     />
                     <select
                       value={item.type}
                       onChange={(e) => updateType(index, e.target.value as 'everyone' | 'claim')}
-                      className="bg-[#0A2342] text-white px-3 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                      className="text-white px-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                      style={{ backgroundColor: '#0A2342' }}
                     >
                       <option value="everyone">Everyone</option>
                       <option value="claim">Claim</option>
                     </select>
                     {items.length > 1 && (
-                      <button onClick={() => removeItem(index)} className="text-red-400 hover:text-red-300 px-2 transition-colors">
+                      <button onClick={() => removeItem(index)} className="text-red-400 hover:text-red-300 px-2 transition-colors text-sm">
                         x
                       </button>
                     )}
                   </div>
                 ))}
               </div>
-              <div className="flex gap-3 mt-3">
-                <button onClick={() => addItem('everyone')} className="text-[#5BA4CF] text-sm hover:text-white transition-colors">
+              <div className="flex gap-4 mt-4">
+                <button onClick={() => addItem('everyone')} className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>
                   + Everyone brings
                 </button>
-                <button onClick={() => addItem('claim')} className="text-[#E8A838] text-sm hover:text-white transition-colors">
+                <button onClick={() => addItem('claim')} className="text-sm font-medium transition-colors" style={{ color: '#E8A838' }}>
                   + Someone claims
                 </button>
               </div>
             </div>
-            <div className="bg-[#0A2342] rounded-lg p-3 text-sm">
-              <p className="text-[#5BA4CF]"><span className="text-white font-semibold">Everyone</span> - each guest needs their own (towels, sunscreen)</p>
-              <p className="text-[#5BA4CF] mt-1"><span className="text-[#E8A838] font-semibold">Claim</span> - only one needed, a guest volunteers (cooler, speaker)</p>
+            <div className="rounded-xl p-4 text-sm" style={{ backgroundColor: '#0A2342' }}>
+              <p className="font-light" style={{ color: '#A8D5DC' }}><span className="text-white font-semibold">Everyone</span> means each guest needs their own, like towels or sunscreen.</p>
+              <p className="font-light mt-2" style={{ color: '#A8D5DC' }}><span className="font-semibold" style={{ color: '#E8A838' }}>Claim</span> means only one is needed and a guest volunteers, like a cooler or speaker.</p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={handleSave}
                 disabled={!title || items.filter(i => i.text.trim()).length === 0}
-                className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors disabled:opacity-40"
+                className="px-6 py-3 rounded-full font-semibold text-sm transition-colors disabled:opacity-40"
+                style={{ backgroundColor: '#E8A838', color: '#0A2342' }}
               >
                 Create List
               </button>
-              <button onClick={() => { setAdding(false); setTitle(''); setItems([{ text: '', type: 'everyone' }]) }} className="text-[#5BA4CF] px-6 py-3 rounded-lg hover:text-white transition-colors">
+              <button
+                onClick={() => { setAdding(false); setTitle(''); setItems([{ text: '', type: 'everyone' }]) }}
+                className="px-6 py-3 rounded-full text-sm font-medium transition-colors hover:text-white"
+                style={{ color: '#A8D5DC' }}
+              >
                 Cancel
               </button>
             </div>
           </div>
         )}
+
         {lists.length === 0 && !adding && (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-4">🧳</div>
-            <p className="text-white font-bold text-lg">No lists yet</p>
-            <p className="text-[#5BA4CF] text-sm mt-1 mb-6">Create a packing list to share with your guests.</p>
-            <button onClick={() => setAdding(true)} className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors">
+          <div className="text-center py-24">
+            <p className="text-white font-bold text-xl mb-2">No lists yet</p>
+            <p className="font-light mb-8" style={{ color: '#A8D5DC' }}>Create a packing list to share with your guests.</p>
+            <button onClick={() => setAdding(true)} className="px-6 py-3 rounded-full font-semibold text-sm transition-colors" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
               Create First List
             </button>
           </div>
         )}
+
         <div className="space-y-4">
           {lists.map((list) => (
-            <div key={list.id} className="bg-[#1B4F8A] rounded-xl p-5">
-              <div className="flex items-start justify-between mb-3">
+            <div key={list.id} className="rounded-2xl p-6" style={{ backgroundColor: '#0D2B4E' }}>
+              <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-white font-bold text-lg">{list.title}</p>
-                  <p className="text-[#5BA4CF] text-sm">{list.items.length} items</p>
+                  <p className="text-sm font-light mt-0.5" style={{ color: '#A8D5DC' }}>{list.items.length} items</p>
                 </div>
               </div>
-              <div className="space-y-1 mb-4">
+              <div className="space-y-1.5 mb-5">
                 {list.items.slice(0, 4).map((item: any, i: number) => (
-                  <p key={i} className="text-[#5BA4CF] text-sm">
-                    {item.type === 'claim' ? '🙋 ' : '· '}{item.text}
-                  </p>
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: item.type === 'claim' ? 'rgba(232,168,56,0.15)' : 'rgba(26,122,138,0.15)', color: item.type === 'claim' ? '#E8A838' : '#A8D5DC' }}>
+                      {item.type === 'claim' ? 'Claim' : 'Everyone'}
+                    </span>
+                    <p className="text-sm font-light" style={{ color: '#A8D5DC' }}>{item.text}</p>
+                  </div>
                 ))}
                 {list.items.length > 4 && (
-                  <p className="text-[#5BA4CF] text-sm">· and {list.items.length - 4} more...</p>
+                  <p className="text-sm font-light" style={{ color: '#A8D5DC' }}>and {list.items.length - 4} more items</p>
                 )}
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 items-center">
                 <button
                   onClick={() => handleCopy(list.id)}
-                  className="bg-[#1A7A8A] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#065A82] transition-colors"
+                  className="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+                  style={{ backgroundColor: '#1A7A8A', color: 'white' }}
                 >
                   {copied === list.id ? 'Copied!' : 'Copy Link'}
                 </button>
-                <a href={'/packing/' + list.id} className="text-[#5BA4CF] px-4 py-2 rounded-lg text-sm hover:text-white transition-colors">
+                <a href={'/packing/' + list.id} className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>
                   Preview
                 </a>
-                <button onClick={() => handleDelete(list.id)} className="text-red-400 text-sm hover:text-red-300 transition-colors ml-auto">
+                <button onClick={() => handleDelete(list.id)} className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors ml-auto">
                   Delete
                 </button>
               </div>
