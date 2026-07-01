@@ -56,7 +56,7 @@ export default function Dashboard() {
       </nav>
 
       <div className="relative h-48 overflow-hidden">
-        <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" sizes="(max-width: 768px) 100vw, 50vw" />
+        <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(10,35,66,0.4) 0%, rgba(10,35,66,0.85) 100%)' }} />
         <div className="relative z-10 px-6 h-full flex flex-col justify-end pb-6 max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-white">Welcome home.</h1>
