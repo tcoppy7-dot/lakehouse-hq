@@ -128,7 +128,7 @@ export default function Home() {
                 A flat monthly membership covers your app access and locks in your service rates. Tasks are priced upfront so you always know what you are paying.
               </p>
               <div className="p-6 rounded-2xl mb-6" style={{ backgroundColor: '#0A2342' }}>
-                <p className="text-5xl font-bold mb-1" style={{ color: '#E8A838' }}>$250</p>
+                <p className="text-5xl font-bold mb-1" style={{ color: '#E8A838' }}>$99</p>
                 <p className="text-white font-medium">per month</p>
                 <p className="text-sm font-light mt-3" style={{ color: '#A8D5DC' }}>Includes full app access, photo documentation, priority scheduling, and direct communication with your service team.</p>
               </div>
@@ -139,8 +139,8 @@ export default function Home() {
             <div>
               <div className="divide-y" style={{ borderColor: 'rgba(168,213,220,0.15)' }}>
                 {[
-                  { task: 'Boat Cover On or Off', price: '$50' },
-                  { task: 'Jet Ski Cover On or Off', price: '$25' },
+                  { task: 'Boat Cover On or Off', price: '$20' },
+                  { task: 'Jet Ski Cover On or Off', price: '$10' },
                   { task: 'Patio Furniture Setup or Storage', price: '$35' },
                   { task: 'Lawn Mowing', price: 'Quote' },
                   { task: 'Seasonal Open Package', price: 'Quote' },
