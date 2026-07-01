@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 const CONDITIONS = ['good', 'fair', 'poor', 'missing']
 
@@ -79,59 +80,63 @@ export default function Inventory() {
   if (loading) return <div className="min-h-screen bg-[#0A2342] flex items-center justify-center"><p className="text-white">Loading...</p></div>
 
   return (
-    <main className="min-h-screen bg-[#0A2342]">
-      <nav className="bg-[#1B4F8A] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <a href="/dashboard" className="text-2xl">⚓</a>
-          <span className="text-white font-bold text-xl">Inventory</span>
-        </div>
-        <a href="/dashboard" className="text-[#5BA4CF] hover:text-white text-sm transition-colors">Dashboard</a>
+    <main className="min-h-screen bg-[#0A2342]" style={{ fontFamily: 'var(--font-jakarta), sans-serif' }}>
+      <nav className="px-8 py-5 flex items-center justify-between border-b border-[#1B4F8A]">
+        <Image src="/logo.png" alt="Lakehouse HQ" width={140} height={48} className="object-contain" />
+        <a href="/dashboard" className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Dashboard</a>
       </nav>
-      <div className="px-6 py-8 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+
+      <div className="px-8 py-10 max-w-4xl mx-auto">
+        <div className="flex items-start justify-between mb-10">
           <div>
-            <h2 className="text-white text-xl font-bold">What is at the house</h2>
-            <p className="text-[#5BA4CF] text-sm">{items.length} items tracked</p>
+            <p className="text-sm font-medium tracking-widest uppercase mb-3" style={{ color: '#1A7A8A' }}>Property</p>
+            <h1 className="text-4xl font-bold text-white">Inventory</h1>
+            <p className="mt-2 font-light" style={{ color: '#A8D5DC' }}>{items.length} items tracked</p>
           </div>
           {!adding && (
             <button
               onClick={() => setAdding(true)}
-              className="bg-[#E8A838] text-[#0A2342] px-4 py-2 rounded-lg font-semibold text-sm hover:bg-[#d4962e] transition-colors"
+              className="px-5 py-2.5 rounded-full font-semibold text-sm transition-colors"
+              style={{ backgroundColor: '#E8A838', color: '#0A2342' }}
             >
               Add Item
             </button>
           )}
         </div>
+
         {adding && (
-          <div className="bg-[#1B4F8A] rounded-xl p-5 mb-6 space-y-4">
-            <h3 className="text-white font-bold">{editingId ? 'Edit Item' : 'Add New Item'}</h3>
+          <div className="rounded-2xl p-6 mb-8 space-y-5" style={{ backgroundColor: '#0D2B4E' }}>
+            <h3 className="text-white font-bold text-lg">{editingId ? 'Edit Item' : 'Add New Item'}</h3>
             <div>
-              <label className="text-[#5BA4CF] text-sm mb-1 block">Item Name</label>
+              <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Item Name</label>
               <input
                 type="text"
                 placeholder="Life jackets, kayak paddles, propane tank..."
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full bg-[#0A2342] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                className="w-full text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                style={{ backgroundColor: '#0A2342' }}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[#5BA4CF] text-sm mb-1 block">Quantity</label>
+                <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Quantity</label>
                 <input
                   type="number"
                   min="1"
                   value={form.quantity}
                   onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                  className="w-full bg-[#0A2342] text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                  className="w-full text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                  style={{ backgroundColor: '#0A2342' }}
                 />
               </div>
               <div>
-                <label className="text-[#5BA4CF] text-sm mb-1 block">Condition</label>
+                <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Condition</label>
                 <select
                   value={form.condition}
                   onChange={(e) => setForm({ ...form, condition: e.target.value })}
-                  className="w-full bg-[#0A2342] text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                  className="w-full text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                  style={{ backgroundColor: '#0A2342' }}
                 >
                   {CONDITIONS.map(c => (
                     <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
@@ -140,67 +145,73 @@ export default function Inventory() {
               </div>
             </div>
             <div>
-              <label className="text-[#5BA4CF] text-sm mb-1 block">Location <span className="font-normal">(optional)</span></label>
+              <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Location <span className="font-normal normal-case">(optional)</span></label>
               <input
                 type="text"
                 placeholder="Storage shed, garage, dock box..."
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
-                className="w-full bg-[#0A2342] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                className="w-full text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                style={{ backgroundColor: '#0A2342' }}
               />
             </div>
             <div>
-              <label className="text-[#5BA4CF] text-sm mb-1 block">Notes <span className="font-normal">(optional)</span></label>
+              <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Notes <span className="font-normal normal-case">(optional)</span></label>
               <input
                 type="text"
                 placeholder="Any details worth knowing..."
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="w-full bg-[#0A2342] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
+                className="w-full text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
+                style={{ backgroundColor: '#0A2342' }}
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={handleSave}
                 disabled={!form.name}
-                className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors disabled:opacity-40"
+                className="px-6 py-3 rounded-full font-semibold text-sm transition-colors disabled:opacity-40"
+                style={{ backgroundColor: '#E8A838', color: '#0A2342' }}
               >
                 {editingId ? 'Save Changes' : 'Add Item'}
               </button>
-              <button onClick={resetForm} className="text-[#5BA4CF] px-6 py-3 rounded-lg hover:text-white transition-colors">
+              <button onClick={resetForm} className="px-6 py-3 rounded-full text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>
                 Cancel
               </button>
             </div>
           </div>
         )}
+
         {items.length === 0 && !adding && (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-4">📦</div>
-            <p className="text-white font-bold text-lg">No items yet</p>
-            <p className="text-[#5BA4CF] text-sm mt-1 mb-6">Start tracking what is at your lakehouse.</p>
-            <button onClick={() => setAdding(true)} className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors">
+          <div className="text-center py-24">
+            <p className="text-white font-bold text-xl mb-2">No items yet</p>
+            <p className="font-light mb-8" style={{ color: '#A8D5DC' }}>Start tracking what is at your lakehouse.</p>
+            <button onClick={() => setAdding(true)} className="px-6 py-3 rounded-full font-semibold text-sm transition-colors" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
               Add First Item
             </button>
           </div>
         )}
+
         <div className="space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="bg-[#1B4F8A] rounded-xl p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div>
+            <div key={item.id} className="rounded-xl p-5 flex items-center justify-between" style={{ backgroundColor: '#0D2B4E' }}>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
                   <p className="text-white font-semibold">{item.name}</p>
-                  <p className="text-[#5BA4CF] text-sm">Qty: {item.quantity}{item.location ? ` · ${item.location}` : ''}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${conditionColor(item.condition)}`}>
+                    {item.condition.charAt(0).toUpperCase() + item.condition.slice(1)}
+                  </span>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${conditionColor(item.condition)}`}>
-                  {item.condition.charAt(0).toUpperCase() + item.condition.slice(1)}
-                </span>
+                <p className="text-sm font-light" style={{ color: '#A8D5DC' }}>
+                  Qty: {item.quantity}{item.location ? `, ${item.location}` : ''}
+                </p>
+                {item.notes && <p className="text-sm font-light mt-0.5" style={{ color: '#A8D5DC' }}>{item.notes}</p>}
               </div>
-              {item.notes && <p className="text-[#5BA4CF] text-sm mb-3">{item.notes}</p>}
-              <div className="flex gap-3">
-                <button onClick={() => handleEdit(item)} className="text-[#5BA4CF] text-sm hover:text-white transition-colors">
+              <div className="flex gap-4 ml-6 shrink-0">
+                <button onClick={() => handleEdit(item)} className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>
                   Edit
                 </button>
-                <button onClick={() => handleDelete(item.id)} className="text-red-400 text-sm hover:text-red-300 transition-colors">
+                <button onClick={() => handleDelete(item.id)} className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors">
                   Delete
                 </button>
               </div>
