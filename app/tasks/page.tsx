@@ -10,8 +10,8 @@ const TASK_MENU = [
   { title: 'Jet Ski Cover', price: 10, image: '/jetskisondock.jpeg', description: 'Cover on or off for each jet ski', hasToggle: true },
   { title: 'Patio Furniture', price: 35, image: '/patiochairs.jpeg', description: 'Set up or store patio chairs and cushions', hasToggle: true },
   { title: 'Boat Fuel Top-Off', price: 0, image: '/gas.jpeg', description: 'Charged at actual cost of fuel', hasToggle: false },
-  { title: 'Seasonal Open', price: 0, image: '/vikinghouse.jpg', description: 'Full spring opening package, we will provide a quote', hasToggle: false },
-  { title: 'Seasonal Close', price: 0, image: '/vikinghouse.jpg', description: 'Full fall closing package, we will provide a quote', hasToggle: false },
+  { title: 'Seasonal Open', price: 0, image: '/july3sun.jpg', description: 'Full spring opening package, we will provide a quote', hasToggle: false },
+  { title: 'Seasonal Close', price: 0, image: '/july3sun.jpg', description: 'Full fall closing package, we will provide a quote', hasToggle: false },
   { title: 'Lawn Mowing', price: 0, image: '/lawnmowing.jpg', description: 'Lawn mowed and clippings cleared', hasToggle: false },
   { title: 'General Maintenance', price: 0, image: '/boattubing.jpg', description: 'Describe what you need, we will provide a quote', hasToggle: false },
 ]
