@@ -6,23 +6,21 @@ import TaskCalendar from '../components/TaskCalendar'
 import Image from 'next/image'
 
 const TASK_MENU = [
-  { title: 'Boat Cover On', price: 20, image: '/service.png', description: 'We will put your boat cover on securely' },
-  { title: 'Boat Cover Off', price: 20, image: '/service.png', description: 'We will remove and store your boat cover' },
-  { title: 'Jet Ski Cover On', price: 10, image: '/jetskicovered.jpg', description: 'Cover on for each jet ski' },
-  { title: 'Jet Ski Cover Off', price: 10, image: '/jetskiopen.jpg', description: 'Cover off for each jet ski' },
-  { title: 'Patio Furniture Up', price: 35, image: '/dock.png', description: 'Set up patio chairs and cushions' },
-  { title: 'Patio Furniture Down', price: 35, image: '/dock.png', description: 'Store patio chairs and cushions' },
-  { title: 'Boat Fuel Top-Off', price: 0, image: '/boatfuel.png', description: 'Charged at actual cost of fuel' },
-  { title: 'Seasonal Open', price: 0, image: '/property.jpg', description: 'Full spring opening package, we will provide a quote' },
-  { title: 'Seasonal Close', price: 0, image: '/property.jpg', description: 'Full fall closing package, we will provide a quote' },
-  { title: 'Lawn Mowing', price: 0, image: '/lawnmowing.jpg', description: 'Lawn mowed and clippings cleared' },
-  { title: 'General Maintenance', price: 0, image: '/boattubing.jpg', description: 'Describe what you need, we will provide a quote' },
+  { title: 'Boat Cover', price: 20, image: '/marina.jpg', description: 'Put on or take off your boat cover', hasToggle: true },
+  { title: 'Jet Ski Cover', price: 10, image: '/jetskisondock.jpeg', description: 'Cover on or off for each jet ski', hasToggle: true },
+  { title: 'Patio Furniture', price: 35, image: '/patiochairs.jpeg', description: 'Set up or store patio chairs and cushions', hasToggle: true },
+  { title: 'Boat Fuel Top-Off', price: 0, image: '/gas.jpeg', description: 'Charged at actual cost of fuel', hasToggle: false },
+  { title: 'Seasonal Open', price: 0, image: '/vikinghouse.jpg', description: 'Full spring opening package, we will provide a quote', hasToggle: false },
+  { title: 'Seasonal Close', price: 0, image: '/vikinghouse.jpg', description: 'Full fall closing package, we will provide a quote', hasToggle: false },
+  { title: 'Lawn Mowing', price: 0, image: '/lawnmowing.jpg', description: 'Lawn mowed and clippings cleared', hasToggle: false },
+  { title: 'General Maintenance', price: 0, image: '/boattubing.jpg', description: 'Describe what you need, we will provide a quote', hasToggle: false },
 ]
 
 export default function Tasks() {
   const [user, setUser] = useState<any>(null)
   const [step, setStep] = useState<'menu' | 'schedule' | 'confirm' | 'submitted'>('menu')
   const [selected, setSelected] = useState<any>(null)
+  const [toggleOption, setToggleOption] = useState<'On' | 'Off'>('On')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
@@ -59,6 +57,11 @@ export default function Tasks() {
     return `${hour}:${minutes} ${ampm}`
   }
 
+  const getTaskTitle = () => {
+    if (selected?.hasToggle) return `${selected.title} ${toggleOption}`
+    return selected?.title
+  }
+
   const generateRecurringTasks = async (userId: string) => {
     const start = new Date(date)
     const end = new Date(endDate)
@@ -67,7 +70,7 @@ export default function Tasks() {
     while (current <= end) {
       taskRows.push({
         owner_id: userId,
-        title: selected.title,
+        title: getTaskTitle(),
         description: notes,
         scheduled_date: current.toISOString().split('T')[0],
         scheduled_time: time || null,
@@ -79,7 +82,7 @@ export default function Tasks() {
     await supabase.from('tasks').insert(taskRows)
     await supabase.from('recurring_tasks').insert({
       owner_id: userId,
-      title: selected.title,
+      title: getTaskTitle(),
       description: notes,
       interval_days: intervalDays,
       start_date: date,
@@ -96,7 +99,7 @@ export default function Tasks() {
     } else {
       await supabase.from('tasks').insert({
         owner_id: user.id,
-        title: selected.title,
+        title: getTaskTitle(),
         description: notes,
         scheduled_date: date,
         scheduled_time: time || null,
@@ -110,7 +113,7 @@ export default function Tasks() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ownerEmail: user.email,
-        taskTitle: selected.title + (isRecurring ? ' (Recurring)' : ''),
+        taskTitle: getTaskTitle() + (isRecurring ? ' (Recurring)' : ''),
         scheduledDate: date,
         scheduledTime: time ? formatTime(time) : 'No time specified',
         price: selected.price,
@@ -130,6 +133,7 @@ export default function Tasks() {
   const resetFlow = () => {
     setStep('menu')
     setSelected(null)
+    setToggleOption('On')
     setDate('')
     setTime('')
     setNotes('')
@@ -166,7 +170,7 @@ export default function Tasks() {
               {TASK_MENU.map((task) => (
                 <button
                   key={task.title}
-                  onClick={() => { setSelected(task); setStep('schedule') }}
+                  onClick={() => { setSelected(task); setToggleOption('On'); setStep('schedule') }}
                   className="relative rounded-2xl overflow-hidden h-44 group text-left"
                 >
                   <Image src={task.image} alt={task.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 50vw, 25vw" />
@@ -239,11 +243,32 @@ export default function Tasks() {
               <Image src={selected.image} alt={selected.title} fill className="object-cover" sizes="100vw" />
               <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.9) 0%, rgba(10,35,66,0.3) 100%)' }} />
               <div className="absolute bottom-0 left-0 p-5">
-                <p className="text-white font-bold text-xl">{selected.title}</p>
+                <p className="text-white font-bold text-xl">{getTaskTitle()}</p>
                 <p className="text-sm font-semibold mt-1" style={{ color: '#E8A838' }}>{selected.price > 0 ? `$${selected.price}` : 'Quote provided after review'}</p>
               </div>
             </div>
             <div className="space-y-5">
+              {selected.hasToggle && (
+                <div>
+                  <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>On or Off</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setToggleOption('On')}
+                      className={`flex-1 py-3 rounded-full text-sm font-semibold transition-colors ${toggleOption === 'On' ? 'text-[#0A2342]' : 'text-white'}`}
+                      style={{ backgroundColor: toggleOption === 'On' ? '#E8A838' : '#0D2B4E' }}
+                    >
+                      On
+                    </button>
+                    <button
+                      onClick={() => setToggleOption('Off')}
+                      className={`flex-1 py-3 rounded-full text-sm font-semibold transition-colors ${toggleOption === 'Off' ? 'text-[#0A2342]' : 'text-white'}`}
+                      style={{ backgroundColor: toggleOption === 'Off' ? '#E8A838' : '#0D2B4E' }}
+                    >
+                      Off
+                    </button>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Preferred Date</label>
                 <input
@@ -333,7 +358,7 @@ export default function Tasks() {
             <div className="rounded-2xl p-6 space-y-4 mb-6" style={{ backgroundColor: '#0D2B4E' }}>
               <div className="flex justify-between">
                 <span className="font-light" style={{ color: '#A8D5DC' }}>Service</span>
-                <span className="text-white font-semibold">{selected.title}{isRecurring ? ' (Recurring)' : ''}</span>
+                <span className="text-white font-semibold">{getTaskTitle()}{isRecurring ? ' (Recurring)' : ''}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-light" style={{ color: '#A8D5DC' }}>Start Date</span>
