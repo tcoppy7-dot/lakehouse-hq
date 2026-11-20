@@ -91,7 +91,7 @@ export default function Dashboard() {
           </a>
 
           <a href="/tasks" className="relative rounded-2xl overflow-hidden h-44 group">
-            <Image src="/service.png" alt="Request a Task" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+            <Image src="/jetskiopen.jpg" alt="Request a Task" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.9) 0%, rgba(10,35,66,0.3) 100%)' }} />
             <div className="absolute bottom-0 left-0 p-5">
               <p className="text-white font-bold text-lg">Request a Task</p>

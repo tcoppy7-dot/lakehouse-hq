@@ -18,7 +18,7 @@ export default function Home() {
       </nav>
 
       <section className="relative min-h-[80vh] flex items-end pb-12 overflow-hidden">
-        <Image src="/july3sun.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" priority style={{ objectPosition: 'center 60%' }} />
+        <Image src="/july3sun.JPG" alt="Lake sunset" fill className="object-cover" sizes="100vw" priority style={{ objectPosition: 'center 60%' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.95) 0%, rgba(10,35,66,0.5) 60%, rgba(10,35,66,0.2) 100%)' }} />
         <div className="relative z-10 px-6 max-w-7xl mx-auto w-full">
           <p className="text-xs font-medium tracking-widest uppercase mb-4" style={{ color: '#1A7A8A' }}>Lake property services</p>
@@ -166,7 +166,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden">
-            <Image src="/vikinghouse.jpg" alt="Lakehouse property" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" style={{ objectPosition: 'center 80%' }} />
+            <Image src="/vikinghouse.JPG" alt="Lakehouse property" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" style={{ objectPosition: 'center 80%' }} />
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.6) 0%, rgba(10,35,66,0.1) 100%)' }} />
           </div>
         </div>
