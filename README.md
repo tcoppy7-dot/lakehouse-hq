@@ -1,3 +1,7 @@
+# Lakehouse HQ
+
+Lakehouse property management app and local concierge service. Live at https://lakehouse-hq.vercel.app
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
