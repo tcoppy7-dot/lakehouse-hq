@@ -1,33 +1,59 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Lakehouse HQ design tokens
+  paper: warm white page background
+  surface: cards and inputs
+  ink: primary text, ink-2 secondary, ink-3 tertiary
+  line: hairlines and borders
+  lake: the single accent, used for primary actions, links, focus, and active states
+*/
+@theme {
+  --color-paper: #FAF9F6;
+  --color-surface: #FFFFFF;
+  --color-sunk: #F2F0EB;
+  --color-ink: #1B1F24;
+  --color-ink-2: #565C63;
+  --color-ink-3: #868B91;
+  --color-line: #E6E2DA;
+  --color-lake: #3D6B84;
+  --color-lake-dark: #2F5669;
+  --color-lake-tint: #E7EEF2;
+  --color-danger: #B3412F;
+
+  --font-sans: var(--font-text), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-serif-display), Georgia, serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-display);
-  --font-body: var(--font-text);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-paper);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Homepage: service detail sheet */
+::selection {
+  background: var(--color-lake-tint);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lake);
+  outline-offset: 2px;
+}
+
+/* Native date and time pickers inherit the warm palette */
+input[type="date"],
+input[type="time"] {
+  color-scheme: light;
+  min-height: 48px;
+}
+
+/* Service sheet (landing page) */
 .sheet {
   margin: auto auto 0;
   width: 100%;
@@ -35,33 +61,35 @@ body {
   max-height: 92dvh;
   border: 0;
   padding: 0;
-  border-radius: 28px 28px 0 0;
-  background: #ffffff;
-  color: #0A2342;
+  border-radius: 24px 24px 0 0;
+  background: var(--color-surface);
+  color: var(--color-ink);
 }
 .sheet::backdrop {
-  background: rgba(10, 35, 66, 0.5);
-  backdrop-filter: blur(6px);
+  background: rgba(27, 31, 36, 0.45);
 }
-.sheet[open] { animation: sheet-up 0.38s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.sheet[open]::backdrop { animation: fade-in 0.3s ease; }
+.sheet[open] { animation: sheet-up 0.34s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sheet[open]::backdrop { animation: fade-in 0.25s ease; }
 @media (min-width: 640px) {
-  .sheet { margin: auto; max-width: 560px; border-radius: 28px; }
-  .sheet[open] { animation: sheet-pop 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .sheet { margin: auto; max-width: 540px; border-radius: 24px; }
+  .sheet[open] { animation: sheet-pop 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
 }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
-@keyframes sheet-pop { from { transform: translateY(16px) scale(0.97); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sheet-pop { from { transform: translateY(12px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
-/* Homepage: FAQ */
+/* Disclosure rows (FAQ) */
 .faq summary { list-style: none; cursor: pointer; }
 .faq summary::-webkit-details-marker { display: none; }
-.faq .faq-icon { transition: transform 0.25s ease; }
+.faq .faq-icon { transition: transform 0.2s ease; }
 .faq[open] .faq-icon { transform: rotate(45deg); }
 
 @media (prefers-reduced-motion: reduce) {
-  .sheet[open], .sheet[open]::backdrop, .faq .faq-icon { animation: none; transition: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

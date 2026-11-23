@@ -1,5 +1,7 @@
 'use client'
 import { useState } from 'react'
+import { StatusChip } from './ui'
+import { formatDate, formatTime, todayKey } from '../lib/format'
 
 interface Task {
   id: string
@@ -8,6 +10,7 @@ interface Task {
   scheduled_time?: string
   status: string
   price?: number
+  profiles?: { full_name?: string } | null
 }
 
 interface Props {
@@ -36,105 +39,88 @@ export default function TaskCalendar({ tasks, showOwnerName = false }: Props) {
     setSelectedDate(null)
   }
 
-  const monthName = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long' })
+  const monthName = new Date(currentYear, currentMonth).toLocaleString('en-US', { month: 'long' })
 
   const tasksByDate: Record<string, Task[]> = {}
-  tasks.forEach(task => {
+  tasks.forEach((task) => {
     if (!task.scheduled_date) return
-    const key = task.scheduled_date
-    if (!tasksByDate[key]) tasksByDate[key] = []
-    tasksByDate[key].push(task)
+    if (!tasksByDate[task.scheduled_date]) tasksByDate[task.scheduled_date] = []
+    tasksByDate[task.scheduled_date].push(task)
   })
 
-  const formatDate = (day: number) => {
-    const month = String(currentMonth + 1).padStart(2, '0')
-    const d = String(day).padStart(2, '0')
-    return `${currentYear}-${month}-${d}`
-  }
+  const keyFor = (day: number) =>
+    `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
-  const formatTime = (time: string) => {
-    if (!time) return ''
-    const [hours, minutes] = time.split(':')
-    const h = parseInt(hours)
-    const ampm = h >= 12 ? 'PM' : 'AM'
-    const hour = h % 12 || 12
-    return `${hour}:${minutes} ${ampm}`
-  }
-
-  const statusColor = (status: string) => {
-    if (status === 'requested') return 'bg-[#E8A838] text-[#0A2342]'
-    if (status === 'confirmed') return 'bg-[#1A7A8A] text-white'
-    if (status === 'in_progress') return 'bg-purple-600 text-white'
-    if (status === 'completed') return 'bg-green-600 text-white'
-    return 'bg-[#1B4F8A] text-white'
-  }
-
-  const dotColor = (tasks: Task[]) => {
-    if (tasks.some(t => t.status === 'requested')) return 'bg-[#E8A838]'
-    if (tasks.some(t => t.status === 'confirmed')) return 'bg-[#1A7A8A]'
-    if (tasks.some(t => t.status === 'in_progress')) return 'bg-purple-500'
-    return 'bg-green-500'
-  }
-
-  const selectedTasks = selectedDate ? (tasksByDate[selectedDate] || []) : []
+  const todays = todayKey()
+  const selectedTasks = selectedDate ? tasksByDate[selectedDate] || [] : []
 
   return (
-    <div className="bg-[#1B4F8A] rounded-xl p-4 mb-6">
+    <div className="rounded-2xl border border-line bg-surface p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="text-[#5BA4CF] hover:text-white transition-colors px-2 py-1">&#8249;</button>
-        <span className="text-white font-bold">{monthName} {currentYear}</span>
-        <button onClick={nextMonth} className="text-[#5BA4CF] hover:text-white transition-colors px-2 py-1">&#8250;</button>
+        <button onClick={prevMonth} aria-label="Previous month" className="h-9 w-9 grid place-items-center rounded-full text-ink-2 hover:bg-sunk text-xl">
+          ‹
+        </button>
+        <span className="text-[16px] font-semibold" aria-live="polite">
+          {monthName} {currentYear}
+        </span>
+        <button onClick={nextMonth} aria-label="Next month" className="h-9 w-9 grid place-items-center rounded-full text-ink-2 hover:bg-sunk text-xl">
+          ›
+        </button>
       </div>
-      <div className="grid grid-cols-7 mb-2">
-        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-          <div key={d} className="text-center text-[#5BA4CF] text-xs font-semibold py-1">{d}</div>
+      <div className="grid grid-cols-7 mb-1">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+          <div key={d} className="text-center text-[12px] text-ink-3 py-1">
+            {d}
+          </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-y-1">
+      <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
           <div key={`empty-${i}`} />
         ))}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1
-          const dateKey = formatDate(day)
-          const dayTasks = tasksByDate[dateKey] || []
-          const isToday = dateKey === today.toISOString().split('T')[0]
+          const dateKey = keyFor(day)
+          const count = (tasksByDate[dateKey] || []).length
+          const isToday = dateKey === todays
           const isSelected = dateKey === selectedDate
           return (
             <button
               key={day}
               onClick={() => setSelectedDate(isSelected ? null : dateKey)}
-              className={`relative flex flex-col items-center py-1 rounded-lg transition-colors
-                ${isSelected ? 'bg-[#1A7A8A]' : isToday ? 'bg-[#0A2342]' : 'hover:bg-[#0A2342]'}`}
+              aria-pressed={isSelected}
+              aria-label={`${formatDate(dateKey)}${count ? `, ${count} ${count === 1 ? 'visit' : 'visits'}` : ''}`}
+              className={`relative h-11 flex flex-col items-center justify-center rounded-xl text-[15px] transition-colors ${
+                isSelected ? 'bg-ink text-white' : isToday ? 'bg-lake-tint text-lake-dark font-semibold' : 'hover:bg-sunk'
+              }`}
             >
-              <span className={`text-sm ${isToday ? 'text-[#E8A838] font-bold' : 'text-white'}`}>{day}</span>
-              {dayTasks.length > 0 && (
-                <div className={`w-1.5 h-1.5 rounded-full mt-0.5 ${dotColor(dayTasks)}`} />
-              )}
+              {day}
+              {count > 0 && <span className={`absolute bottom-1.5 h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-lake'}`} />}
             </button>
           )
         })}
       </div>
       {selectedDate && (
-        <div className="mt-4 border-t border-[#0A2342] pt-4">
+        <div className="mt-4 border-t border-line pt-4">
+          <p className="text-[14px] font-medium mb-2">{formatDate(selectedDate)}</p>
           {selectedTasks.length === 0 ? (
-            <p className="text-[#5BA4CF] text-sm text-center">No tasks on this date.</p>
+            <p className="text-[14px] text-ink-2">Nothing scheduled this day.</p>
           ) : (
-            <div className="space-y-2">
-              {selectedTasks.map(task => (
-                <div key={task.id} className="bg-[#0A2342] rounded-lg p-3 flex items-center justify-between">
+            <ul className="divide-y divide-line">
+              {selectedTasks.map((task) => (
+                <li key={task.id} className="flex items-center justify-between gap-4 py-3">
                   <div>
-                    <p className="text-white text-sm font-semibold">{task.title}</p>
-                    {task.scheduled_time && (
-                      <p className="text-[#5BA4CF] text-xs">{formatTime(task.scheduled_time)}</p>
-                    )}
+                    <p className="text-[15px] font-medium">{task.title}</p>
+                    <p className="text-[13px] text-ink-2">
+                      {[showOwnerName ? task.profiles?.full_name : null, task.scheduled_time ? formatTime(task.scheduled_time) : 'Any time']
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColor(task.status)}`}>
-                    {task.status === 'in_progress' ? 'In Progress' : task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-                  </span>
-                </div>
+                  <StatusChip status={task.status} />
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </div>
       )}

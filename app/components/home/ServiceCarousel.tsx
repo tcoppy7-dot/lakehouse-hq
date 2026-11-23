@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { btn } from '../ui'
 
 type Service = {
   title: string
@@ -98,60 +99,50 @@ export default function ServiceCarousel() {
     <>
       <div
         ref={trackRef}
-        className="no-scrollbar flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 px-5 sm:px-[max(2.5rem,calc((100vw-72rem)/2))] scroll-px-5 sm:scroll-px-[max(2.5rem,calc((100vw-72rem)/2))]"
+        className="no-scrollbar flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 px-5 sm:px-[max(2.5rem,calc((100vw-72rem)/2+2.5rem))] scroll-px-5 sm:scroll-px-[max(2.5rem,calc((100vw-72rem)/2+2.5rem))]"
       >
         {services.map((s) => (
           <button
             key={s.title}
             type="button"
             onClick={() => open(s)}
-            className="group relative shrink-0 snap-start w-[78vw] sm:w-[340px] aspect-[4/5] rounded-[28px] overflow-hidden text-left focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#1A7A8A]"
+            aria-haspopup="dialog"
+            className="group shrink-0 snap-start w-[76vw] sm:w-[300px] rounded-2xl border border-line bg-surface overflow-hidden text-left transition-colors hover:border-ink-3"
           >
-            <Image
-              src={s.image}
-              alt={s.alt}
-              fill
-              sizes="(max-width: 640px) 78vw, 340px"
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-              style={{ objectPosition: s.position ?? 'center' }}
-            />
-            <div className="absolute inset-0 bg-linear-to-t from-[#0A2342]/85 via-[#0A2342]/10 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-6 pr-16">
-              <p className="font-heading text-[1.65rem] leading-[1.1] text-white">{s.title}</p>
-              <p className="font-body mt-2 text-[15px] text-white/80">{s.summary}</p>
-            </div>
-            <span
-              aria-hidden
-              className="absolute bottom-6 right-5 grid place-items-center w-9 h-9 rounded-full bg-white/90 text-[#0A2342] text-xl leading-none"
-            >
-              +
+            <span className="relative block aspect-[4/3] bg-sunk">
+              <Image
+                src={s.image}
+                alt={s.alt}
+                fill
+                sizes="(max-width: 640px) 76vw, 300px"
+                className="object-cover"
+                style={{ objectPosition: s.position ?? 'center' }}
+              />
+            </span>
+            <span className="block p-5">
+              <span className="block text-[17px] font-semibold">{s.title}</span>
+              <span className="block mt-1 text-[15px] text-ink-2">{s.summary}</span>
+              <span className="mt-4 flex items-center justify-between text-[14px]">
+                <span className="text-ink-2">{s.price}</span>
+                <span className="font-medium text-lake group-hover:text-lake-dark">Details</span>
+              </span>
             </span>
           </button>
         ))}
       </div>
 
-      <div className="hidden sm:flex justify-end gap-3 mt-6 max-w-6xl mx-auto px-10">
-        <button
-          type="button"
-          onClick={() => scrollBy(-1)}
-          aria-label="Previous services"
-          className="w-11 h-11 rounded-full bg-[#E3EBF0] text-[#0A2342] text-lg hover:bg-[#d4e0e7] transition-colors"
-        >
+      <div className="hidden sm:flex justify-end gap-2 mt-6 max-w-6xl mx-auto px-10">
+        <button type="button" onClick={() => scrollBy(-1)} aria-label="Previous services" className="h-10 w-10 grid place-items-center rounded-full border border-line bg-surface text-ink-2 hover:text-ink text-lg">
           ‹
         </button>
-        <button
-          type="button"
-          onClick={() => scrollBy(1)}
-          aria-label="More services"
-          className="w-11 h-11 rounded-full bg-[#E3EBF0] text-[#0A2342] text-lg hover:bg-[#d4e0e7] transition-colors"
-        >
+        <button type="button" onClick={() => scrollBy(1)} aria-label="More services" className="h-10 w-10 grid place-items-center rounded-full border border-line bg-surface text-ink-2 hover:text-ink text-lg">
           ›
         </button>
       </div>
 
       <dialog
         ref={dialogRef}
-        className="sheet font-body"
+        className="sheet"
         aria-labelledby="service-sheet-title"
         onClick={(e) => {
           if (e.target === dialogRef.current) close()
@@ -160,12 +151,12 @@ export default function ServiceCarousel() {
       >
         {active && (
           <div>
-            <div className="relative aspect-[16/10]">
+            <div className="relative aspect-[16/10] bg-sunk">
               <Image
                 src={active.image}
                 alt={active.alt}
                 fill
-                sizes="(max-width: 640px) 100vw, 560px"
+                sizes="(max-width: 640px) 100vw, 540px"
                 className="object-cover"
                 style={{ objectPosition: active.position ?? 'center' }}
               />
@@ -173,24 +164,21 @@ export default function ServiceCarousel() {
                 type="button"
                 onClick={close}
                 aria-label="Close"
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 text-[#0A2342] text-2xl leading-none grid place-items-center"
+                className="absolute top-4 right-4 h-10 w-10 grid place-items-center rounded-full bg-surface/95 text-ink text-2xl leading-none"
               >
                 ×
               </button>
             </div>
-            <div className="p-7 sm:p-8">
-              <h3 id="service-sheet-title" className="font-heading text-[2rem] leading-[1.1]">
+            <div className="p-6 sm:p-8">
+              <h3 id="service-sheet-title" className="text-[24px] font-semibold tracking-[-0.02em]">
                 {active.title}
               </h3>
-              <p className="mt-4 text-[17px] leading-relaxed text-[#3C4E63]">{active.detail}</p>
-              <div className="mt-6 flex items-baseline justify-between border-t border-[#E3EBF0] pt-5">
-                <span className="text-[15px] text-[#3C4E63]">Price</span>
-                <span className="text-[17px] font-semibold">{active.price}</span>
+              <p className="mt-3 text-[16px] leading-relaxed text-ink-2">{active.detail}</p>
+              <div className="mt-6 flex items-baseline justify-between border-t border-line pt-5 text-[16px]">
+                <span className="text-ink-2">Price</span>
+                <span className="font-semibold">{active.price}</span>
               </div>
-              <Link
-                href="/signup"
-                className="mt-7 block w-full text-center rounded-full py-4 font-semibold bg-[#E8A838] text-[#0A2342] hover:bg-[#f0b64e] transition-colors"
-              >
+              <Link href="/signup" className={btn('primary', 'lg', 'mt-7 w-full')}>
                 Request this service
               </Link>
             </div>

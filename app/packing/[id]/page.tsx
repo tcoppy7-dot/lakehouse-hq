@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, use } from 'react'
 import { supabase } from '../../lib/supabase'
+import { LoadingScreen, btn, inputClass } from '../../components/ui'
 
 export default function PublicPackingList({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -12,19 +13,24 @@ export default function PublicPackingList({ params }: { params: Promise<{ id: st
 
   useEffect(() => {
     const init = async () => {
-      const { data } = await supabase
-        .from('packing_lists')
-        .select('*')
-        .eq('id', id)
-        .single()
+      const { data } = await supabase.from('packing_lists').select('*').eq('id', id).single()
       if (data) {
         setList(data)
         setItems(data.items.map((item: any) => ({ ...item, checked: false })))
+        const saved = window.localStorage?.getItem('lakehouse-guest-name')
+        if (saved) setClaimName(saved)
       }
       setLoading(false)
     }
     init()
   }, [id])
+
+  const persist = async (updated: any[]) => {
+    await supabase
+      .from('packing_lists')
+      .update({ items: updated.map(({ checked, ...rest }) => rest) })
+      .eq('id', id)
+  }
 
   const toggleEveryone = (index: number) => {
     const updated = [...items]
@@ -33,141 +39,144 @@ export default function PublicPackingList({ params }: { params: Promise<{ id: st
   }
 
   const handleClaim = async (index: number) => {
-    if (!claimName.trim()) return
+    const name = claimName.trim()
+    if (!name) return
+    try { window.localStorage?.setItem('lakehouse-guest-name', name) } catch {}
     const updated = [...items]
-    updated[index] = { ...updated[index], claimed_by: claimName.trim() }
+    updated[index] = { ...updated[index], claimed_by: name }
     setItems(updated)
-    await supabase
-      .from('packing_lists')
-      .update({ items: updated.map(({ checked, ...rest }) => rest) })
-      .eq('id', id)
     setClaimingIndex(null)
-    setClaimName('')
+    await persist(updated)
   }
 
   const handleUnclaim = async (index: number) => {
     const updated = [...items]
     updated[index] = { ...updated[index], claimed_by: null }
     setItems(updated)
-    await supabase
-      .from('packing_lists')
-      .update({ items: updated.map(({ checked, ...rest }) => rest) })
-      .eq('id', id)
+    await persist(updated)
   }
 
-  if (loading) return <div className="min-h-screen bg-[#0A2342] flex items-center justify-center"><p className="text-white">Loading...</p></div>
+  if (loading) return <LoadingScreen />
 
-  if (!list) return (
-    <div className="min-h-screen bg-[#0A2342] flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-white text-xl font-bold">List not found</p>
-        <p className="text-[#5BA4CF] mt-2">This link may have expired.</p>
-      </div>
-    </div>
-  )
+  if (!list) {
+    return (
+      <main className="flex-1 grid place-items-center px-6">
+        <div className="text-center max-w-sm">
+          <p className="text-[20px] font-semibold">This list is not available</p>
+          <p className="mt-2 text-[15px] text-ink-2">The link may be mistyped, or the owner deleted the list. Ask them to send it again.</p>
+        </div>
+      </main>
+    )
+  }
 
-  const everyoneItems = items.filter(i => i.type === 'everyone')
-  const claimItems = items.filter(i => i.type === 'claim')
-  const everyoneChecked = everyoneItems.filter(i => i.checked).length
-  const claimsClaimed = claimItems.filter(i => i.claimed_by).length
+  const everyoneItems = items.filter((i) => i.type === 'everyone')
+  const claimItems = items.filter((i) => i.type === 'claim')
+  const everyoneChecked = everyoneItems.filter((i) => i.checked).length
+  const claimsClaimed = claimItems.filter((i) => i.claimed_by).length
+  const allDone = items.length > 0 && everyoneChecked === everyoneItems.length && claimsClaimed === claimItems.length
 
   return (
-    <main className="min-h-screen bg-[#0A2342] px-6 py-8">
+    <main className="flex-1 px-5 py-10 sm:py-16">
       <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <div className="text-4xl mb-3">⚓</div>
-          <p className="text-[#5BA4CF] text-sm mb-2">Lakehouse HQ</p>
-          <h1 className="text-white text-2xl font-bold">{list.title}</h1>
-        </div>
+        <p className="font-display text-[17px] text-ink-2">Lakehouse HQ</p>
+        <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em] leading-tight">{list.title}</h1>
+        <p className="mt-2 text-[15px] text-ink-2">Check off what you are packing. For shared items, tap the one you will bring so nobody doubles up.</p>
+
         {everyoneItems.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-white font-bold">Everyone Brings</p>
-              <p className="text-[#5BA4CF] text-sm">{everyoneChecked} of {everyoneItems.length} checked</p>
+          <section className="mt-10">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-[17px] font-semibold">Everyone brings</h2>
+              <p className="text-[14px] text-ink-3 tabular-nums">
+                {everyoneChecked} of {everyoneItems.length} packed
+              </p>
             </div>
-            <div className="space-y-2">
+            <ul className="rounded-2xl border border-line bg-surface divide-y divide-line">
               {items.map((item, index) => {
                 if (item.type !== 'everyone') return null
                 return (
-                  <button
-                    key={index}
-                    onClick={() => toggleEveryone(index)}
-                    className={'w-full flex items-center gap-4 p-4 rounded-xl transition-colors text-left ' + (item.checked ? 'bg-[#1A7A8A]' : 'bg-[#1B4F8A] hover:bg-[#1A7A8A]')}
-                  >
-                    <div className={'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ' + (item.checked ? 'bg-white border-white' : 'border-[#5BA4CF]')}>
-                      {item.checked && <span className="text-[#1A7A8A] text-sm font-bold">✓</span>}
-                    </div>
-                    <span className={'font-medium ' + (item.checked ? 'text-white line-through opacity-70' : 'text-white')}>
-                      {item.text}
-                    </span>
-                  </button>
+                  <li key={index}>
+                    <button
+                      onClick={() => toggleEveryone(index)}
+                      aria-pressed={item.checked}
+                      className="w-full flex items-center gap-4 px-5 py-4 text-left"
+                    >
+                      <span
+                        aria-hidden
+                        className={`h-6 w-6 shrink-0 rounded-full border-2 grid place-items-center transition-colors ${item.checked ? 'bg-lake border-lake text-white' : 'border-line'}`}
+                      >
+                        {item.checked && (
+                          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3">
+                            <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className={`text-[16px] ${item.checked ? 'text-ink-3 line-through' : ''}`}>{item.text}</span>
+                    </button>
+                  </li>
                 )
               })}
-            </div>
-          </div>
+            </ul>
+          </section>
         )}
+
         {claimItems.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-white font-bold">Someone Claims</p>
-              <p className="text-[#5BA4CF] text-sm">{claimsClaimed} of {claimItems.length} claimed</p>
+          <section className="mt-10">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-[17px] font-semibold">One person brings</h2>
+              <p className="text-[14px] text-ink-3 tabular-nums">
+                {claimsClaimed} of {claimItems.length} claimed
+              </p>
             </div>
-            <div className="space-y-2">
+            <ul className="rounded-2xl border border-line bg-surface divide-y divide-line">
               {items.map((item, index) => {
                 if (item.type !== 'claim') return null
                 return (
-                  <div key={index} className="bg-[#1B4F8A] rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-white font-medium">{item.text}</span>
+                  <li key={index} className="px-5 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-[16px]">{item.text}</span>
                       {item.claimed_by ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[#E8A838] text-sm font-semibold">{item.claimed_by}</span>
-                          <button onClick={() => handleUnclaim(index)} className="text-[#5BA4CF] text-xs hover:text-white transition-colors">
-                            undo
+                        <span className="flex items-center gap-3 text-[14px]">
+                          <span className="text-ink-2">{item.claimed_by}</span>
+                          <button onClick={() => handleUnclaim(index)} className="font-medium text-lake hover:text-lake-dark">
+                            Undo
                           </button>
-                        </div>
+                        </span>
                       ) : (
-                        <button
-                          onClick={() => { setClaimingIndex(index); setClaimName('') }}
-                          className="bg-[#E8A838] text-[#0A2342] px-3 py-1 rounded-lg text-sm font-semibold hover:bg-[#d4962e] transition-colors"
-                        >
-                          I'll bring it
-                        </button>
+                        claimingIndex !== index && (
+                          <button onClick={() => setClaimingIndex(index)} className={btn('secondary', 'sm')}>
+                            I will bring it
+                          </button>
+                        )
                       )}
                     </div>
                     {claimingIndex === index && (
-                      <div className="mt-3 flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Your name"
-                          value={claimName}
-                          onChange={(e) => setClaimName(e.target.value)}
-                          className="flex-1 bg-[#0A2342] text-white placeholder-[#5BA4CF] px-3 py-2 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                        />
-                        <button
-                          onClick={() => handleClaim(index)}
-                          disabled={!claimName.trim()}
-                          className="bg-[#E8A838] text-[#0A2342] px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#d4962e] transition-colors disabled:opacity-40"
-                        >
+                      <form
+                        className="mt-3 flex gap-2"
+                        onSubmit={(e) => {
+                          e.preventDefault()
+                          handleClaim(index)
+                        }}
+                      >
+                        <label htmlFor={`claim-${index}`} className="sr-only">
+                          Your name
+                        </label>
+                        <input id={`claim-${index}`} autoFocus type="text" placeholder="Your name" value={claimName} onChange={(e) => setClaimName(e.target.value)} className={inputClass + ' flex-1 min-w-0'} />
+                        <button type="submit" disabled={!claimName.trim()} className={btn('primary', 'md')}>
                           Claim
                         </button>
-                        <button onClick={() => setClaimingIndex(null)} className="text-[#5BA4CF] px-2 hover:text-white transition-colors text-sm">
+                        <button type="button" onClick={() => setClaimingIndex(null)} className={btn('quiet', 'md', '!px-3')}>
                           Cancel
                         </button>
-                      </div>
+                      </form>
                     )}
-                  </div>
+                  </li>
                 )
               })}
-            </div>
-          </div>
+            </ul>
+          </section>
         )}
-        {everyoneChecked === everyoneItems.length && claimsClaimed === claimItems.length && items.length > 0 && (
-          <div className="text-center mt-8">
-            <div className="text-4xl mb-2">🎉</div>
-            <p className="text-white font-bold">All packed and ready to go!</p>
-          </div>
-        )}
+
+        {allDone && <p className="mt-10 rounded-2xl bg-lake-tint px-5 py-4 text-[15px] text-lake-dark font-medium">Everything is packed and claimed. See you at the lake.</p>}
       </div>
     </main>
   )

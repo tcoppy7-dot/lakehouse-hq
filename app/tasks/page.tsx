@@ -1,25 +1,38 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { useRouter } from 'next/navigation'
-import TaskCalendar from '../components/TaskCalendar'
 import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { supabase } from '../lib/supabase'
+import AppShell from '../components/AppShell'
+import TaskCalendar from '../components/TaskCalendar'
+import { Card, EmptyState, Field, FormError, LoadingScreen, PageHeader, StatusChip, btn, inputClass, textareaClass } from '../components/ui'
+import { formatDate, formatPrice, formatShortDate, formatTime, formatWhen, isUpcoming, todayKey } from '../lib/format'
 
-const TASK_MENU = [
+type Service = { title: string; price: number; image: string; description: string; hasToggle: boolean }
+
+const TASK_MENU: Service[] = [
   { title: 'Boat Cover', price: 20, image: '/marina.jpg', description: 'Put on or take off your boat cover', hasToggle: true },
   { title: 'Jet Ski Cover', price: 10, image: '/jetskisondock.jpeg', description: 'Cover on or off for each jet ski', hasToggle: true },
   { title: 'Patio Furniture', price: 35, image: '/patiochairs.jpeg', description: 'Set up or store patio chairs and cushions', hasToggle: true },
-  { title: 'Boat Fuel Top-Off', price: 0, image: '/gas.jpeg', description: 'Charged at actual cost of fuel', hasToggle: false },
-  { title: 'Seasonal Open', price: 0, image: '/july3sun.JPG', description: 'Full spring opening package, we will provide a quote', hasToggle: false },
-  { title: 'Seasonal Close', price: 0, image: '/july3sun.JPG', description: 'Full fall closing package, we will provide a quote', hasToggle: false },
-  { title: 'Lawn Mowing', price: 0, image: '/lawnmowing.jpg', description: 'Lawn mowed and clippings cleared', hasToggle: false },
-  { title: 'General Maintenance', price: 0, image: '/boattubing.jpg', description: 'Describe what you need, we will provide a quote', hasToggle: false },
+  { title: 'Boat Fuel Top-Off', price: 0, image: '/gas.jpeg', description: 'Charged at the actual cost of fuel', hasToggle: false },
+  { title: 'Seasonal Open', price: 0, image: '/property.jpg', description: 'Full spring opening package. We will send a quote.', hasToggle: false },
+  { title: 'Seasonal Close', price: 0, image: '/vikinghouse.JPG', description: 'Full fall closing package. We will send a quote.', hasToggle: false },
+  { title: 'Lawn Mowing', price: 0, image: '/lawnmowing.jpg', description: 'Lawn mowed and clippings cleared. Can repeat on a schedule.', hasToggle: false },
+  { title: 'General Maintenance', price: 0, image: '/boats.jpg', description: 'Describe what you need and we will send a quote.', hasToggle: false },
 ]
 
+const priceLabel = (s: Service) => (s.title === 'Boat Fuel Top-Off' ? 'Cost of fuel' : s.price > 0 ? `$${s.price}` : 'Quote')
+
+type Step = 'list' | 'menu' | 'details' | 'review' | 'submitted'
+const STEP_NUMBER: Partial<Record<Step, number>> = { menu: 1, details: 2, review: 3 }
+const STEP_NAME: Partial<Record<Step, string>> = { menu: 'Choose a service', details: 'Pick a time', review: 'Review and send' }
+
 export default function Tasks() {
+  const router = useRouter()
   const [user, setUser] = useState<any>(null)
-  const [step, setStep] = useState<'menu' | 'schedule' | 'confirm' | 'submitted'>('menu')
-  const [selected, setSelected] = useState<any>(null)
+  const [step, setStep] = useState<Step>('list')
+  const [selected, setSelected] = useState<Service | null>(null)
   const [toggleOption, setToggleOption] = useState<'On' | 'Off'>('On')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
@@ -30,56 +43,61 @@ export default function Tasks() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'list' | 'calendar'>('list')
-  const router = useRouter()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setUser(user)
-      const { data } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
-      setTasks(data || [])
+      await loadTasks(user.id)
+      if (new URLSearchParams(window.location.search).get('new') === '1') setStep('menu')
       setLoading(false)
     }
     init()
   }, [router])
 
-  const formatTime = (time: string) => {
-    if (!time) return ''
-    const [hours, minutes] = time.split(':')
-    const h = parseInt(hours)
-    const ampm = h >= 12 ? 'PM' : 'AM'
-    const hour = h % 12 || 12
-    return `${hour}:${minutes} ${ampm}`
+  // Scroll to top whenever the step changes, so each step starts at its heading.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [step])
+
+  const loadTasks = async (uid: string) => {
+    const { data } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('owner_id', uid)
+      .order('scheduled_date', { ascending: true })
+    setTasks(data || [])
   }
 
   const getTaskTitle = () => {
     if (selected?.hasToggle) return `${selected.title} ${toggleOption}`
-    return selected?.title
+    return selected?.title ?? ''
   }
 
   const generateRecurringTasks = async (userId: string) => {
-    const start = new Date(date)
-    const end = new Date(endDate)
+    const [sy, sm, sd] = date.split('-').map(Number)
+    const [ey, em, ed] = endDate.split('-').map(Number)
+    const current = new Date(sy, sm - 1, sd)
+    const end = new Date(ey, em - 1, ed)
     const taskRows = []
-    let current = new Date(start)
     while (current <= end) {
+      const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`
       taskRows.push({
         owner_id: userId,
         title: getTaskTitle(),
         description: notes,
-        scheduled_date: current.toISOString().split('T')[0],
+        scheduled_date: key,
         scheduled_time: time || null,
         status: 'requested',
-        price: selected.price,
+        price: selected!.price,
       })
       current.setDate(current.getDate() + intervalDays)
     }
-    await supabase.from('tasks').insert(taskRows)
+    const { error: insertError } = await supabase.from('tasks').insert(taskRows)
+    if (insertError) throw insertError
     await supabase.from('recurring_tasks').insert({
       owner_id: userId,
       title: getTaskTitle(),
@@ -88,50 +106,59 @@ export default function Tasks() {
       start_date: date,
       end_date: endDate,
       scheduled_time: time || null,
-      price: selected.price,
+      price: selected!.price,
       status: 'active',
     })
   }
 
   const handleSubmit = async () => {
-    if (isRecurring && endDate) {
-      await generateRecurringTasks(user.id)
-    } else {
-      await supabase.from('tasks').insert({
-        owner_id: user.id,
-        title: getTaskTitle(),
-        description: notes,
-        scheduled_date: date,
-        scheduled_time: time || null,
-        status: 'requested',
-        price: selected.price,
-      })
+    if (!selected || !user) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      if (isRecurring && endDate) {
+        await generateRecurringTasks(user.id)
+      } else {
+        const { error: insertError } = await supabase.from('tasks').insert({
+          owner_id: user.id,
+          title: getTaskTitle(),
+          description: notes,
+          scheduled_date: date,
+          scheduled_time: time || null,
+          status: 'requested',
+          price: selected.price,
+        })
+        if (insertError) throw insertError
+      }
+    } catch {
+      setError('Your request did not go through. Check your connection and try sending it again.')
+      setSubmitting(false)
+      return
     }
 
-    await fetch('/api/notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ownerEmail: user.email,
-        taskTitle: getTaskTitle() + (isRecurring ? ' (Recurring)' : ''),
-        scheduledDate: date,
-        scheduledTime: time ? formatTime(time) : 'No time specified',
-        price: selected.price,
-        notes,
+    // The request is saved. A failed confirmation email should not block the owner.
+    try {
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ownerEmail: user.email,
+          taskTitle: getTaskTitle() + (isRecurring ? ' (Recurring)' : ''),
+          scheduledDate: date,
+          scheduledTime: time ? formatTime(time) : 'No time specified',
+          price: selected.price,
+          notes,
+        }),
       })
-    })
+    } catch {}
 
-    const { data } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('owner_id', user.id)
-      .order('created_at', { ascending: false })
-    setTasks(data || [])
+    await loadTasks(user.id)
+    setSubmitting(false)
     setStep('submitted')
   }
 
-  const resetFlow = () => {
-    setStep('menu')
+  const resetFlow = (to: Step = 'list') => {
+    setStep(to)
     setSelected(null)
     setToggleOption('On')
     setDate('')
@@ -140,283 +167,345 @@ export default function Tasks() {
     setIsRecurring(false)
     setIntervalDays(14)
     setEndDate('')
+    setError(null)
+    if (to === 'list') window.history.replaceState(null, '', '/tasks')
   }
 
-  const statusColor = (status: string) => {
-    if (status === 'requested') return 'bg-[#E8A838] text-[#0A2342]'
-    if (status === 'confirmed') return 'bg-[#1A7A8A] text-white'
-    if (status === 'completed') return 'bg-green-600 text-white'
-    return 'bg-[#1B4F8A] text-white'
+  // The "New request" button in the top bar opens the flow in place when already on this page.
+  useEffect(() => {
+    const open = () => resetFlow('menu')
+    window.addEventListener('lakehouse:new-request', open)
+    return () => window.removeEventListener('lakehouse:new-request', open)
+  })
+
+  if (loading) {
+    return (
+      <AppShell>
+        <LoadingScreen />
+      </AppShell>
+    )
   }
 
-  if (loading) return <div className="min-h-screen bg-[#0A2342] flex items-center justify-center"><p className="text-white">Loading...</p></div>
+  const upcoming = tasks.filter(isUpcoming)
+  const past = tasks.filter((t) => !isUpcoming(t)).reverse()
+  const canContinue = !!date && (!isRecurring || !!endDate)
+  const stepNumber = STEP_NUMBER[step]
 
   return (
-    <main className="min-h-screen bg-[#0A2342]" style={{ fontFamily: 'var(--font-jakarta), sans-serif' }}>
-      <nav className="px-8 py-5 flex items-center justify-between border-b border-[#1B4F8A]">
-        <Image src="/logo.png" alt="Lakehouse HQ" width={140} height={48} className="object-contain" />
-        <a href="/dashboard" className="text-sm font-medium transition-colors" style={{ color: '#A8D5DC' }}>Dashboard</a>
-      </nav>
+    <AppShell>
+      {stepNumber && (
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => (step === 'menu' ? resetFlow('list') : setStep(step === 'review' ? 'details' : 'menu'))}
+            className="text-[15px] font-medium text-ink-2 hover:text-ink"
+          >
+            ‹ {step === 'menu' ? 'Cancel' : 'Back'}
+          </button>
+          <p className="text-[14px] text-ink-3" aria-live="polite">
+            Step {stepNumber} of 3, {STEP_NAME[step]?.toLowerCase()}
+          </p>
+        </div>
+      )}
 
-      <div className="px-8 py-10 max-w-7xl mx-auto">
-        {step === 'menu' && (
-          <div>
-            <div className="mb-10">
-              <p className="text-sm font-medium tracking-widest uppercase mb-3" style={{ color: '#1A7A8A' }}>Services</p>
-              <h2 className="text-4xl font-bold text-white">What do you need done?</h2>
-              <p className="mt-2 font-light" style={{ color: '#A8D5DC' }}>Select a service to get started.</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {TASK_MENU.map((task) => (
-                <button
-                  key={task.title}
-                  onClick={() => { setSelected(task); setToggleOption('On'); setStep('schedule') }}
-                  className="relative rounded-2xl overflow-hidden h-44 group text-left"
-                >
-                  <Image src={task.image} alt={task.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 50vw, 25vw" />
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.95) 0%, rgba(10,35,66,0.3) 100%)' }} />
-                  <div className="absolute bottom-0 left-0 p-4">
-                    <p className="text-white font-semibold text-sm leading-tight">{task.title}</p>
-                    <p className="text-sm font-semibold mt-1" style={{ color: '#E8A838' }}>
-                      {task.price > 0 ? `$${task.price}` : 'Quote'}
-                    </p>
-                  </div>
+      {/* ---------- Requests list ---------- */}
+      {step === 'list' && (
+        <>
+          <PageHeader
+            title="Requests"
+            description="Everything you have asked us to take care of."
+            action={
+              <button onClick={() => setStep('menu')} className={btn('primary', 'md', 'w-full sm:w-auto')}>
+                New request
+              </button>
+            }
+          />
+
+          {tasks.length === 0 ? (
+            <EmptyState
+              title="No requests yet"
+              body="Pick a service, choose a date, and we will confirm within 24 hours."
+              action={
+                <button onClick={() => setStep('menu')} className={btn('primary', 'md')}>
+                  Request a service
                 </button>
-              ))}
+              }
+            />
+          ) : (
+            <>
+              <div className="mb-6 inline-flex rounded-full bg-sunk p-1" role="tablist" aria-label="View">
+                {(['list', 'calendar'] as const).map((v) => (
+                  <button
+                    key={v}
+                    role="tab"
+                    aria-selected={view === v}
+                    onClick={() => setView(v)}
+                    className={`h-8 px-4 rounded-full text-[14px] font-medium transition-colors ${view === v ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
+                  >
+                    {v === 'list' ? 'List' : 'Calendar'}
+                  </button>
+                ))}
+              </div>
+
+              {view === 'calendar' && <TaskCalendar tasks={tasks} />}
+
+              {view === 'list' && (
+                <div className="space-y-10">
+                  <section>
+                    <h2 className="text-[17px] font-semibold mb-3">Upcoming</h2>
+                    {upcoming.length === 0 ? (
+                      <p className="text-[15px] text-ink-2">
+                        Nothing scheduled.{' '}
+                        <button onClick={() => setStep('menu')} className="font-medium text-lake hover:text-lake-dark">
+                          Request a service
+                        </button>
+                      </p>
+                    ) : (
+                      <TaskList tasks={upcoming} />
+                    )}
+                  </section>
+                  {past.length > 0 && (
+                    <section>
+                      <h2 className="text-[17px] font-semibold mb-3">Past</h2>
+                      <TaskList tasks={past} past />
+                    </section>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+
+      {/* ---------- Step 1: choose ---------- */}
+      {step === 'menu' && (
+        <>
+          <PageHeader title="What do you need done?" description="Prices are per visit. Quoted services get a price from us before any work starts." />
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {TASK_MENU.map((task) => (
+              <li key={task.title}>
+                <button
+                  type="button"
+                  onClick={() => { setSelected(task); setToggleOption('On'); setIsRecurring(false); setStep('details') }}
+                  className="w-full flex items-center gap-4 rounded-2xl border border-line bg-surface p-3 pr-5 text-left transition-colors hover:border-ink-3"
+                >
+                  <span className="relative h-18 w-18 shrink-0 overflow-hidden rounded-xl bg-sunk">
+                    <Image src={task.image} alt="" fill sizes="72px" className="object-cover" />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[16px] font-semibold">{task.title}</span>
+                    <span className="block text-[14px] text-ink-2 mt-0.5">{task.description}</span>
+                  </span>
+                  <span className={`text-[15px] whitespace-nowrap ${task.price > 0 ? 'font-semibold' : 'text-ink-2'}`}>{priceLabel(task)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {/* ---------- Step 2: details ---------- */}
+      {step === 'details' && selected && (
+        <div className="max-w-xl">
+          <PageHeader title="When should we come?" />
+          <Card className="flex items-center gap-4 p-3 pr-5 mb-8">
+            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-sunk">
+              <Image src={selected.image} alt="" fill sizes="56px" className="object-cover" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-[16px] font-semibold">{selected.title}</span>
+              <span className="block text-[14px] text-ink-2">{priceLabel(selected)}</span>
+            </span>
+            <button type="button" onClick={() => setStep('menu')} className="text-[14px] font-medium text-lake hover:text-lake-dark">
+              Change
+            </button>
+          </Card>
+
+          <div className="space-y-6">
+            {selected.hasToggle && (
+              <fieldset>
+                <legend className="block text-[14px] font-medium mb-2">Cover on or off?</legend>
+                <div className="grid grid-cols-2 gap-2 rounded-full bg-sunk p-1">
+                  {(['On', 'Off'] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      aria-pressed={toggleOption === opt}
+                      onClick={() => setToggleOption(opt)}
+                      className={`h-10 rounded-full text-[15px] font-medium transition-colors ${toggleOption === opt ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
+                    >
+                      {selected.title === 'Patio Furniture' ? (opt === 'On' ? 'Set up' : 'Store') : opt === 'On' ? 'Put on' : 'Take off'}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <Field label={isRecurring ? 'First visit' : 'Date'} htmlFor="date">
+                <input id="date" type="date" min={todayKey()} value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} required />
+              </Field>
+              <Field label="Time" htmlFor="time" optional>
+                <input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+              </Field>
             </div>
 
-            {tasks.length > 0 && (
-              <div className="mt-16">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-white font-bold text-xl">Your Requests</h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setView('list')}
-                      className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-colors ${view === 'list' ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
-                    >
-                      List
-                    </button>
-                    <button
-                      onClick={() => setView('calendar')}
-                      className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-colors ${view === 'calendar' ? 'bg-[#E8A838] text-[#0A2342]' : 'bg-[#1B4F8A] text-[#5BA4CF] hover:text-white'}`}
-                    >
-                      Calendar
-                    </button>
-                  </div>
-                </div>
-                {view === 'calendar' && <TaskCalendar tasks={tasks} />}
-                {view === 'list' && (
-                  <div className="space-y-3">
-                    {tasks.map((task) => (
-                      <div key={task.id} className="bg-[#1B4F8A] rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-white font-semibold">{task.title}</p>
-                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColor(task.status)}`}>
-                            {task.status}
-                          </span>
-                        </div>
-                        <p className="text-[#5BA4CF] text-sm">
-                          {task.scheduled_date}{task.scheduled_time ? ` at ${formatTime(task.scheduled_time)}` : ''}
-                        </p>
-                        {task.description && <p className="text-[#5BA4CF] text-sm mt-1">{task.description}</p>}
-                        {task.photo_url && (
-                          <div className="mt-3">
-                            <p className="text-[#5BA4CF] text-xs mb-1">Completion photo</p>
-                            <img src={task.photo_url} alt="Completion" className="rounded-lg w-full max-h-40 object-cover" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+            {selected.title === 'Lawn Mowing' && (
+              <div className="rounded-2xl border border-line bg-surface">
+                <label htmlFor="recurring" className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer">
+                  <span>
+                    <span className="block text-[15px] font-medium">Repeat on a schedule</span>
+                    <span className="block text-[14px] text-ink-2">We will add a visit for each date.</span>
+                  </span>
+                  <input
+                    id="recurring"
+                    type="checkbox"
+                    role="switch"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <span aria-hidden className="relative h-7 w-12 shrink-0 rounded-full bg-line transition-colors peer-checked:bg-lake peer-focus-visible:outline-2 peer-focus-visible:outline-lake peer-focus-visible:outline-offset-2 after:absolute after:top-0.5 after:left-0.5 after:h-6 after:w-6 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
+                </label>
+                {isRecurring && (
+                  <div className="grid gap-6 sm:grid-cols-2 border-t border-line px-5 py-5">
+                    <Field label="Mow every" htmlFor="interval">
+                      <select id="interval" value={intervalDays} onChange={(e) => setIntervalDays(Number(e.target.value))} className={inputClass}>
+                        <option value={7}>Week</option>
+                        <option value={14}>2 weeks</option>
+                        <option value={21}>3 weeks</option>
+                      </select>
+                    </Field>
+                    <Field label="Last visit by" htmlFor="end">
+                      <input id="end" type="date" min={date || todayKey()} value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
+                    </Field>
                   </div>
                 )}
               </div>
             )}
-          </div>
-        )}
 
-        {step === 'schedule' && selected && (
-          <div className="max-w-lg">
-            <button onClick={() => setStep('menu')} className="text-sm font-medium mb-8 transition-colors" style={{ color: '#A8D5DC' }}>
-              Back to services
-            </button>
-            <div className="relative rounded-2xl overflow-hidden h-48 mb-8">
-              <Image src={selected.image} alt={selected.title} fill className="object-cover" sizes="100vw" />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.9) 0%, rgba(10,35,66,0.3) 100%)' }} />
-              <div className="absolute bottom-0 left-0 p-5">
-                <p className="text-white font-bold text-xl">{getTaskTitle()}</p>
-                <p className="text-sm font-semibold mt-1" style={{ color: '#E8A838' }}>{selected.price > 0 ? `$${selected.price}` : 'Quote provided after review'}</p>
-              </div>
+            <Field label="Notes for our team" htmlFor="notes" optional>
+              <textarea
+                id="notes"
+                rows={3}
+                placeholder="Gate code, where the cover is stored, anything we should know"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className={textareaClass}
+              />
+            </Field>
+
+            <div className="pt-2">
+              <button type="button" onClick={() => canContinue && setStep('review')} disabled={!canContinue} className={btn('primary', 'lg', 'w-full sm:w-auto')}>
+                Review request
+              </button>
+              {!canContinue && (
+                <p className="mt-3 text-[14px] text-ink-3">
+                  {!date ? 'Choose a date to continue.' : 'Choose the last visit date to continue.'}
+                </p>
+              )}
             </div>
-            <div className="space-y-5">
-              {selected.hasToggle && (
-                <div>
-                  <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>On or Off</label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setToggleOption('On')}
-                      className={`flex-1 py-3 rounded-full text-sm font-semibold transition-colors ${toggleOption === 'On' ? 'text-[#0A2342]' : 'text-white'}`}
-                      style={{ backgroundColor: toggleOption === 'On' ? '#E8A838' : '#0D2B4E' }}
-                    >
-                      On
-                    </button>
-                    <button
-                      onClick={() => setToggleOption('Off')}
-                      className={`flex-1 py-3 rounded-full text-sm font-semibold transition-colors ${toggleOption === 'Off' ? 'text-[#0A2342]' : 'text-white'}`}
-                      style={{ backgroundColor: toggleOption === 'Off' ? '#E8A838' : '#0D2B4E' }}
-                    >
-                      Off
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div>
-                <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Preferred Date</label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                  style={{ backgroundColor: '#0D2B4E' }}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Preferred Time <span className="font-normal normal-case">(optional)</span></label>
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="w-full text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                  style={{ backgroundColor: '#0D2B4E' }}
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Notes for our team <span className="font-normal normal-case">(optional)</span></label>
-                <textarea
-                  placeholder="Any special instructions or details..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  className="w-full text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                  style={{ backgroundColor: '#0D2B4E' }}
-                />
-              </div>
-              {selected?.title === 'Lawn Mowing' && (
-                <div>
-                  <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ backgroundColor: '#0D2B4E' }}>
-                    <span className="text-white text-sm font-semibold">Make this recurring</span>
-                    <button
-                      onClick={() => setIsRecurring(!isRecurring)}
-                      className={`w-12 h-6 rounded-full transition-colors ${isRecurring ? 'bg-[#1A7A8A]' : 'bg-[#0A2342]'}`}
-                    >
-                      <div className={`w-5 h-5 bg-white rounded-full transition-transform mx-0.5 ${isRecurring ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                  {isRecurring && (
-                    <div className="mt-3 space-y-3">
-                      <div>
-                        <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Mow every</label>
-                        <select
-                          value={intervalDays}
-                          onChange={(e) => setIntervalDays(Number(e.target.value))}
-                          className="w-full text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                          style={{ backgroundColor: '#0D2B4E' }}
-                        >
-                          <option value={7}>7 days (weekly)</option>
-                          <option value={14}>14 days (every 2 weeks)</option>
-                          <option value={21}>21 days (every 3 weeks)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>End date</label>
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          className="w-full text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                          style={{ backgroundColor: '#0D2B4E' }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              <button
-                onClick={() => { if (date) setStep('confirm') }}
-                disabled={!date || (isRecurring && !endDate)}
-                className="w-full py-3 rounded-full font-semibold text-sm transition-colors disabled:opacity-40"
-                style={{ backgroundColor: '#E8A838', color: '#0A2342' }}
-              >
-                Review Request
+          </div>
+        </div>
+      )}
+
+      {/* ---------- Step 3: review ---------- */}
+      {step === 'review' && selected && (
+        <div className="max-w-xl">
+          <PageHeader title="Review your request" description="We will confirm within 24 hours and email you at each step." />
+          <Card>
+            <dl className="divide-y divide-line text-[15px]">
+              <Row label="Service" value={getTaskTitle() + (isRecurring ? ', repeating' : '')} />
+              <Row label={isRecurring ? 'First visit' : 'Date'} value={formatDate(date)} />
+              {isRecurring && <Row label="Repeats" value={`Every ${intervalDays / 7 === 1 ? 'week' : `${intervalDays / 7} weeks`}`} />}
+              {isRecurring && <Row label="Last visit by" value={formatDate(endDate)} />}
+              <Row label="Time" value={time ? formatTime(time) : 'Any time'} />
+              <Row label="Price" value={priceLabel(selected)} strong />
+              {notes && <Row label="Notes" value={notes} />}
+            </dl>
+          </Card>
+          <div className="mt-6 space-y-4">
+            <FormError message={error} />
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+              <button type="button" onClick={() => setStep('details')} className={btn('secondary', 'lg')}>
+                Edit
+              </button>
+              <button type="button" onClick={handleSubmit} disabled={submitting} className={btn('primary', 'lg', 'sm:flex-1')}>
+                {submitting ? 'Sending request' : 'Send request'}
               </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {step === 'confirm' && selected && (
-          <div className="max-w-lg">
-            <h2 className="text-white text-2xl font-bold mb-8">Confirm your request</h2>
-            <div className="rounded-2xl p-6 space-y-4 mb-6" style={{ backgroundColor: '#0D2B4E' }}>
-              <div className="flex justify-between">
-                <span className="font-light" style={{ color: '#A8D5DC' }}>Service</span>
-                <span className="text-white font-semibold">{getTaskTitle()}{isRecurring ? ' (Recurring)' : ''}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-light" style={{ color: '#A8D5DC' }}>Start Date</span>
-                <span className="text-white">{date}</span>
-              </div>
-              {isRecurring && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="font-light" style={{ color: '#A8D5DC' }}>Frequency</span>
-                    <span className="text-white">Every {intervalDays} days</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-light" style={{ color: '#A8D5DC' }}>End Date</span>
-                    <span className="text-white">{endDate}</span>
-                  </div>
-                </>
-              )}
-              {time && (
-                <div className="flex justify-between">
-                  <span className="font-light" style={{ color: '#A8D5DC' }}>Time</span>
-                  <span className="text-white">{formatTime(time)}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="font-light" style={{ color: '#A8D5DC' }}>Price</span>
-                <span className="font-bold" style={{ color: '#E8A838' }}>{selected.price > 0 ? `$${selected.price}` : 'Quote'}</span>
-              </div>
-              {notes && (
-                <div>
-                  <span className="font-light block mb-1" style={{ color: '#A8D5DC' }}>Notes</span>
-                  <span className="text-white text-sm">{notes}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <button onClick={handleSubmit} className="flex-1 py-3 rounded-full font-semibold text-sm transition-colors" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
-                Submit Request
-              </button>
-              <button onClick={() => setStep('schedule')} className="px-6 py-3 rounded-full text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>
-                Back
-              </button>
-            </div>
+      {/* ---------- Sent ---------- */}
+      {step === 'submitted' && (
+        <div className="max-w-md mx-auto text-center py-12 sm:py-20">
+          <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-full bg-lake-tint text-lake">
+            <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
-        )}
-
-        {step === 'submitted' && (
-          <div className="text-center py-24 max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: '#1A7A8A' }}>
-              <span className="text-white text-2xl font-bold">✓</span>
-            </div>
-            <h2 className="text-white text-2xl font-bold mb-3">Request submitted</h2>
-            <p className="font-light mb-10" style={{ color: '#A8D5DC' }}>We will confirm your request shortly. Check your email for confirmation.</p>
-            <button onClick={resetFlow} className="px-8 py-3 rounded-full font-semibold text-sm transition-colors" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
-              Request Another Service
+          <h1 className="text-[28px] font-semibold tracking-[-0.02em]">Request sent</h1>
+          <p className="mt-3 text-[16px] text-ink-2">
+            {getTaskTitle()} on {formatDate(date)}. We will confirm within 24 hours{user?.email ? ` and email ${user.email}` : ''}.
+          </p>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link href="/dashboard" className={btn('primary', 'lg')}>
+              Back to home
+            </Link>
+            <button type="button" onClick={() => resetFlow('menu')} className={btn('secondary', 'lg')}>
+              Request another
             </button>
           </div>
-        )}
-      </div>
-    </main>
+        </div>
+      )}
+    </AppShell>
+  )
+}
+
+function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-6 px-5 py-4">
+      <dt className="text-ink-2">{label}</dt>
+      <dd className={`text-right ${strong ? 'font-semibold' : ''}`}>{value}</dd>
+    </div>
+  )
+}
+
+function TaskList({ tasks, past = false }: { tasks: any[]; past?: boolean }) {
+  return (
+    <Card>
+      <ul className="divide-y divide-line">
+        {tasks.map((task) => {
+          const stale = past && task.status === 'requested'
+          return (
+            <li key={task.id} className="px-5 py-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[16px] font-medium">{task.title}</p>
+                  <p className="mt-0.5 text-[14px] text-ink-2">
+                    {past ? formatShortDate(task.scheduled_date) : formatWhen(task.scheduled_date, task.scheduled_time)}
+                    {task.price > 0 ? `, ${formatPrice(task.price)}` : ''}
+                  </p>
+                  {task.description && <p className="mt-1 text-[14px] text-ink-3 line-clamp-2">{task.description}</p>}
+                </div>
+                {stale ? (
+                  <span className="inline-flex items-center h-6 px-2.5 rounded-full text-[12.5px] font-medium bg-sunk text-ink-3 whitespace-nowrap">Not confirmed</span>
+                ) : (
+                  <StatusChip status={task.status} />
+                )}
+              </div>
+              {task.photo_url && (
+                <a href={task.photo_url} target="_blank" rel="noreferrer" className="mt-3 block w-full sm:w-64 overflow-hidden rounded-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={task.photo_url} alt={`Completion photo for ${task.title}`} className="aspect-[4/3] w-full object-cover bg-sunk" />
+                </a>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
   )
 }

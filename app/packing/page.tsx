@@ -1,18 +1,24 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { supabase } from '../lib/supabase'
+import AppShell from '../components/AppShell'
+import { Card, EmptyState, Field, FormError, LoadingScreen, PageHeader, btn, inputClass } from '../components/ui'
+
+type DraftItem = { text: string; type: 'everyone' | 'claim' }
 
 export default function PackingLists() {
+  const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [lists, setLists] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [title, setTitle] = useState('')
-  const [items, setItems] = useState<{ text: string; type: 'everyone' | 'claim' }[]>([{ text: '', type: 'everyone' }])
+  const [items, setItems] = useState<DraftItem[]>([{ text: '', type: 'everyone' }])
   const [copied, setCopied] = useState<string | null>(null)
-  const router = useRouter()
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -25,211 +31,227 @@ export default function PackingLists() {
   }, [router])
 
   const loadLists = async (uid: string) => {
-    const { data } = await supabase
-      .from('packing_lists')
-      .select('*')
-      .eq('owner_id', uid)
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('packing_lists').select('*').eq('owner_id', uid).order('created_at', { ascending: false })
     setLists(data || [])
     setLoading(false)
   }
 
-  const handleSave = async () => {
-    const filtered = items.filter(i => i.text.trim() !== '')
-    if (!title || filtered.length === 0) return
-    await supabase.from('packing_lists').insert({
-      owner_id: user.id,
-      title,
-      items: filtered.map(item => ({ text: item.text, type: item.type, checked: false, claimed_by: null }))
-    })
-    await loadLists(user.id)
+  const filled = items.filter((i) => i.text.trim() !== '')
+
+  const resetForm = () => {
+    setAdding(false)
     setTitle('')
     setItems([{ text: '', type: 'everyone' }])
-    setAdding(false)
+    setError(null)
+  }
+
+  const handleSave = async () => {
+    if (!title.trim() || filled.length === 0) return
+    setSaving(true)
+    setError(null)
+    const { error: saveError } = await supabase.from('packing_lists').insert({
+      owner_id: user.id,
+      title: title.trim(),
+      items: filled.map((item) => ({ text: item.text.trim(), type: item.type, checked: false, claimed_by: null })),
+    })
+    setSaving(false)
+    if (saveError) {
+      setError('The list was not saved. Try again in a moment.')
+      return
+    }
+    await loadLists(user.id)
+    resetForm()
   }
 
   const handleDelete = async (id: string) => {
     await supabase.from('packing_lists').delete().eq('id', id)
+    setConfirmDelete(null)
     await loadLists(user.id)
   }
 
-  const handleCopy = (id: string) => {
+  const handleCopy = async (id: string) => {
     const url = window.location.origin + '/packing/' + id
-    navigator.clipboard.writeText(url)
-    setCopied(id)
-    setTimeout(() => setCopied(null), 2000)
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(id)
+      setTimeout(() => setCopied(null), 2000)
+    } catch {
+      window.prompt('Copy this link', url)
+    }
   }
 
-  const addItem = (type: 'everyone' | 'claim') => setItems([...items, { text: '', type }])
-  const updateItem = (index: number, text: string) => {
+  const updateItem = (index: number, patch: Partial<DraftItem>) => {
     const updated = [...items]
-    updated[index] = { ...updated[index], text }
+    updated[index] = { ...updated[index], ...patch }
     setItems(updated)
-  }
-  const updateType = (index: number, type: 'everyone' | 'claim') => {
-    const updated = [...items]
-    updated[index] = { ...updated[index], type }
-    setItems(updated)
-  }
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index))
   }
 
-  if (loading) return <div className="min-h-screen bg-[#0A2342] flex items-center justify-center"><p className="text-white">Loading...</p></div>
+  if (loading) {
+    return (
+      <AppShell>
+        <LoadingScreen />
+      </AppShell>
+    )
+  }
 
   return (
-    <main className="min-h-screen bg-[#0A2342]" style={{ fontFamily: 'var(--font-jakarta), sans-serif' }}>
-      <nav className="px-8 py-5 flex items-center justify-between border-b border-[#1B4F8A]">
-        <Image src="/logo.png" alt="Lakehouse HQ" width={140} height={48} className="object-contain" />
-        <a href="/dashboard" className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>Dashboard</a>
-      </nav>
-
-      <div className="px-8 py-10 max-w-4xl mx-auto">
-        <div className="flex items-start justify-between mb-10">
-          <div>
-            <p className="text-sm font-medium tracking-widest uppercase mb-3" style={{ color: '#1A7A8A' }}>Guests</p>
-            <h1 className="text-4xl font-bold text-white">Packing Lists</h1>
-            <p className="mt-2 font-light" style={{ color: '#A8D5DC' }}>Share with guests before they arrive.</p>
-          </div>
-          {!adding && (
-            <button
-              onClick={() => setAdding(true)}
-              className="px-5 py-2.5 rounded-full font-semibold text-sm transition-colors"
-              style={{ backgroundColor: '#E8A838', color: '#0A2342' }}
-            >
-              New List
+    <AppShell>
+      <PageHeader
+        title="Packing lists"
+        description="Share a list with guests. They can check off what they bring and claim shared items."
+        action={
+          !adding && (
+            <button onClick={() => setAdding(true)} className={btn('primary', 'md', 'w-full sm:w-auto')}>
+              New list
             </button>
-          )}
-        </div>
+          )
+        }
+      />
 
-        {adding && (
-          <div className="rounded-2xl p-6 mb-8 space-y-5" style={{ backgroundColor: '#0D2B4E' }}>
-            <h3 className="text-white font-bold text-lg">Create Packing List</h3>
-            <div>
-              <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>List Title</label>
-              <input
-                type="text"
-                placeholder="Memorial Day Weekend, Summer Trip..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                style={{ backgroundColor: '#0A2342' }}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium tracking-wider uppercase block mb-2" style={{ color: '#A8D5DC' }}>Items</label>
-              <div className="space-y-2">
+      {adding && (
+        <Card className="p-5 sm:p-7 mb-8 max-w-2xl">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSave()
+            }}
+            className="space-y-6"
+          >
+            <h2 className="text-[19px] font-semibold">New packing list</h2>
+            <Field label="List name" htmlFor="title">
+              <input id="title" type="text" autoFocus placeholder="Memorial Day weekend" value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
+            </Field>
+
+            <fieldset>
+              <legend className="block text-[14px] font-medium mb-1">Items</legend>
+              <p className="text-[13px] text-ink-3 mb-3">
+                <span className="text-ink-2 font-medium">Everyone</span> is for things each guest brings, like towels.{' '}
+                <span className="text-ink-2 font-medium">One person</span> is for shared things someone claims, like a cooler.
+              </p>
+              <ul className="space-y-2">
                 {items.map((item, index) => (
-                  <div key={index} className="flex gap-2 items-center">
+                  <li key={index} className="flex gap-2 items-center">
+                    <label htmlFor={`item-${index}`} className="sr-only">
+                      Item {index + 1}
+                    </label>
                     <input
+                      id={`item-${index}`}
                       type="text"
-                      placeholder={'Item ' + (index + 1)}
+                      placeholder={index === 0 ? 'Sunscreen' : `Item ${index + 1}`}
                       value={item.text}
-                      onChange={(e) => updateItem(index, e.target.value)}
-                      className="flex-1 text-white placeholder-gray-500 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                      style={{ backgroundColor: '#0A2342' }}
+                      onChange={(e) => updateItem(index, { text: e.target.value })}
+                      className={inputClass + ' flex-1 min-w-0'}
                     />
+                    <label htmlFor={`type-${index}`} className="sr-only">
+                      Who brings item {index + 1}
+                    </label>
                     <select
+                      id={`type-${index}`}
                       value={item.type}
-                      onChange={(e) => updateType(index, e.target.value as 'everyone' | 'claim')}
-                      className="text-white px-3 py-3 rounded-xl outline-none focus:ring-2 focus:ring-[#1A7A8A] text-sm"
-                      style={{ backgroundColor: '#0A2342' }}
+                      onChange={(e) => updateItem(index, { type: e.target.value as DraftItem['type'] })}
+                      className={inputClass + ' !w-auto shrink-0 pr-2'}
                     >
                       <option value="everyone">Everyone</option>
-                      <option value="claim">Claim</option>
+                      <option value="claim">One person</option>
                     </select>
                     {items.length > 1 && (
-                      <button onClick={() => removeItem(index)} className="text-red-400 hover:text-red-300 px-2 transition-colors text-sm">
-                        x
+                      <button
+                        type="button"
+                        onClick={() => setItems(items.filter((_, i) => i !== index))}
+                        aria-label={`Remove item ${index + 1}`}
+                        className="h-12 w-10 shrink-0 grid place-items-center rounded-xl text-ink-3 hover:text-ink hover:bg-sunk text-xl"
+                      >
+                        ×
                       </button>
                     )}
-                  </div>
+                  </li>
                 ))}
-              </div>
-              <div className="flex gap-4 mt-4">
-                <button onClick={() => addItem('everyone')} className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>
-                  + Everyone brings
-                </button>
-                <button onClick={() => addItem('claim')} className="text-sm font-medium transition-colors" style={{ color: '#E8A838' }}>
-                  + Someone claims
-                </button>
-              </div>
-            </div>
-            <div className="rounded-xl p-4 text-sm" style={{ backgroundColor: '#0A2342' }}>
-              <p className="font-light" style={{ color: '#A8D5DC' }}><span className="text-white font-semibold">Everyone</span> means each guest needs their own, like towels or sunscreen.</p>
-              <p className="font-light mt-2" style={{ color: '#A8D5DC' }}><span className="font-semibold" style={{ color: '#E8A838' }}>Claim</span> means only one is needed and a guest volunteers, like a cooler or speaker.</p>
-            </div>
-            <div className="flex gap-3">
+              </ul>
               <button
-                onClick={handleSave}
-                disabled={!title || items.filter(i => i.text.trim()).length === 0}
-                className="px-6 py-3 rounded-full font-semibold text-sm transition-colors disabled:opacity-40"
-                style={{ backgroundColor: '#E8A838', color: '#0A2342' }}
+                type="button"
+                onClick={() => setItems([...items, { text: '', type: 'everyone' }])}
+                className="mt-3 text-[15px] font-medium text-lake hover:text-lake-dark"
               >
-                Create List
+                Add another item
               </button>
-              <button
-                onClick={() => { setAdding(false); setTitle(''); setItems([{ text: '', type: 'everyone' }]) }}
-                className="px-6 py-3 rounded-full text-sm font-medium transition-colors hover:text-white"
-                style={{ color: '#A8D5DC' }}
-              >
+            </fieldset>
+
+            <FormError message={error} />
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+              <button type="button" onClick={resetForm} className={btn('secondary', 'md')}>
                 Cancel
               </button>
+              <button type="submit" disabled={!title.trim() || filled.length === 0 || saving} className={btn('primary', 'md')}>
+                {saving ? 'Creating' : 'Create list'}
+              </button>
             </div>
-          </div>
-        )}
+            {(!title.trim() || filled.length === 0) && (
+              <p className="text-[14px] text-ink-3 -mt-2">{!title.trim() ? 'Name the list to create it.' : 'Add at least one item.'}</p>
+            )}
+          </form>
+        </Card>
+      )}
 
-        {lists.length === 0 && !adding && (
-          <div className="text-center py-24">
-            <p className="text-white font-bold text-xl mb-2">No lists yet</p>
-            <p className="font-light mb-8" style={{ color: '#A8D5DC' }}>Create a packing list to share with your guests.</p>
-            <button onClick={() => setAdding(true)} className="px-6 py-3 rounded-full font-semibold text-sm transition-colors" style={{ backgroundColor: '#E8A838', color: '#0A2342' }}>
-              Create First List
+      {lists.length === 0 && !adding && (
+        <EmptyState
+          title="No packing lists yet"
+          body="Make a list for your next weekend and send guests the link. No account needed on their end."
+          action={
+            <button onClick={() => setAdding(true)} className={btn('primary', 'md')}>
+              Make a list
             </button>
-          </div>
-        )}
+          }
+        />
+      )}
 
-        <div className="space-y-4">
-          {lists.map((list) => (
-            <div key={list.id} className="rounded-2xl p-6" style={{ backgroundColor: '#0D2B4E' }}>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-white font-bold text-lg">{list.title}</p>
-                  <p className="text-sm font-light mt-0.5" style={{ color: '#A8D5DC' }}>{list.items.length} items</p>
-                </div>
-              </div>
-              <div className="space-y-1.5 mb-5">
+      <div className="grid gap-4 md:grid-cols-2">
+        {lists.map((list) => {
+          const claims = list.items.filter((i: any) => i.type === 'claim')
+          const claimed = claims.filter((i: any) => i.claimed_by).length
+          return (
+            <Card key={list.id} className="p-5 sm:p-6 flex flex-col">
+              <p className="text-[18px] font-semibold">{list.title}</p>
+              <p className="mt-0.5 text-[14px] text-ink-2">
+                {list.items.length} {list.items.length === 1 ? 'item' : 'items'}
+                {claims.length > 0 && `, ${claimed} of ${claims.length} shared items claimed`}
+              </p>
+              <ul className="mt-4 space-y-1.5 text-[15px] text-ink-2 flex-1">
                 {list.items.slice(0, 4).map((item: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: item.type === 'claim' ? 'rgba(232,168,56,0.15)' : 'rgba(26,122,138,0.15)', color: item.type === 'claim' ? '#E8A838' : '#A8D5DC' }}>
-                      {item.type === 'claim' ? 'Claim' : 'Everyone'}
+                  <li key={i} className="flex justify-between gap-4">
+                    <span className="truncate">{item.text}</span>
+                    <span className="text-[13px] text-ink-3 whitespace-nowrap">
+                      {item.type === 'claim' ? item.claimed_by || 'Unclaimed' : 'Everyone'}
                     </span>
-                    <p className="text-sm font-light" style={{ color: '#A8D5DC' }}>{item.text}</p>
-                  </div>
+                  </li>
                 ))}
-                {list.items.length > 4 && (
-                  <p className="text-sm font-light" style={{ color: '#A8D5DC' }}>and {list.items.length - 4} more items</p>
-                )}
-              </div>
-              <div className="flex gap-3 items-center">
-                <button
-                  onClick={() => handleCopy(list.id)}
-                  className="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
-                  style={{ backgroundColor: '#1A7A8A', color: 'white' }}
-                >
-                  {copied === list.id ? 'Copied!' : 'Copy Link'}
+                {list.items.length > 4 && <li className="text-ink-3">and {list.items.length - 4} more</li>}
+              </ul>
+              <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+                <button onClick={() => handleCopy(list.id)} className={btn('primary', 'sm')} aria-live="polite">
+                  {copied === list.id ? 'Link copied' : 'Copy guest link'}
                 </button>
-                <a href={'/packing/' + list.id} className="text-sm font-medium transition-colors hover:text-white" style={{ color: '#A8D5DC' }}>
+                <a href={'/packing/' + list.id} target="_blank" rel="noreferrer" className={btn('quiet', 'sm')}>
                   Preview
                 </a>
-                <button onClick={() => handleDelete(list.id)} className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors ml-auto">
-                  Delete
-                </button>
+                {confirmDelete === list.id ? (
+                  <span className="ml-auto flex gap-1">
+                    <button onClick={() => handleDelete(list.id)} className={btn('danger', 'sm')}>
+                      Delete list
+                    </button>
+                    <button onClick={() => setConfirmDelete(null)} className={btn('quiet', 'sm')}>
+                      Keep
+                    </button>
+                  </span>
+                ) : (
+                  <button onClick={() => setConfirmDelete(list.id)} className={btn('quiet', 'sm', 'ml-auto')}>
+                    Delete
+                  </button>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
+            </Card>
+          )
+        })}
       </div>
-    </main>
+    </AppShell>
   )
 }

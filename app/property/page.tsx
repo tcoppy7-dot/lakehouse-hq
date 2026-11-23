@@ -1,33 +1,61 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
 import { useRouter } from 'next/navigation'
+import { supabase } from '../lib/supabase'
+import AppShell from '../components/AppShell'
+import Secret from '../components/Secret'
+import { Card, EmptyState, Field, FormError, LoadingScreen, PageHeader, btn, inputClass, textareaClass } from '../components/ui'
+
+const EMPTY = {
+  name: '', address: '', wifi_name: '', wifi_password: '',
+  access_code: '', emergency_contact: '', house_rules: '',
+  boat_make: '', boat_model: '', boat_slip: '', num_jetskis: '0', watercraft_notes: '',
+}
+
+type Form = typeof EMPTY
+
+const HOUSE_FIELDS: { key: keyof Form; label: string; placeholder: string; hint?: string }[] = [
+  { key: 'name', label: 'House name', placeholder: 'The lake house' },
+  { key: 'address', label: 'Address', placeholder: '123 Lake Rd' },
+  { key: 'access_code', label: 'Door code', placeholder: '1234', hint: 'Hidden on screen until you tap Show.' },
+  { key: 'wifi_name', label: 'WiFi network', placeholder: 'LakeHouse_5G' },
+  { key: 'wifi_password', label: 'WiFi password', placeholder: 'Password' },
+  { key: 'emergency_contact', label: 'Emergency contact', placeholder: 'Name and phone number' },
+]
+
+const BOAT_FIELDS: { key: keyof Form; label: string; placeholder: string }[] = [
+  { key: 'boat_make', label: 'Boat make', placeholder: 'Malibu' },
+  { key: 'boat_model', label: 'Boat model', placeholder: 'Wakesetter 23 LSV' },
+  { key: 'boat_slip', label: 'Slip', placeholder: 'Slip 12' },
+]
 
 export default function PropertyHub() {
+  const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [property, setProperty] = useState<any>(null)
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({
-    name: '', address: '', wifi_name: '', wifi_password: '',
-    access_code: '', emergency_contact: '', house_rules: '',
-    boat_make: '', boat_model: '', boat_slip: '', num_jetskis: '0', watercraft_notes: ''
-  })
-  const router = useRouter()
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [form, setForm] = useState<Form>(EMPTY)
+
+  const toForm = (data: any): Form => {
+    const f = { ...EMPTY }
+    ;(Object.keys(EMPTY) as (keyof Form)[]).forEach((k) => {
+      f[k] = data?.[k] == null ? EMPTY[k] : String(data[k])
+    })
+    return f
+  }
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setUser(user)
-      const { data } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('owner_id', user.id)
-        .single()
+      const { data } = await supabase.from('properties').select('*').eq('owner_id', user.id).maybeSingle()
       if (data) {
         setProperty(data)
-        setForm({ ...data, num_jetskis: String(data.num_jetskis ?? '0') })
+        setForm(toForm(data))
       }
       setLoading(false)
     }
@@ -35,182 +63,179 @@ export default function PropertyHub() {
   }, [router])
 
   const handleSave = async () => {
+    setSaving(true)
+    setError(null)
     const payload = { ...form, num_jetskis: parseInt(form.num_jetskis) || 0 }
-    if (property) {
-      await supabase.from('properties').update(payload).eq('id', property.id)
-    } else {
-      await supabase.from('properties').insert({ ...payload, owner_id: user.id })
+    const { error: saveError } = property
+      ? await supabase.from('properties').update(payload).eq('id', property.id)
+      : await supabase.from('properties').insert({ ...payload, owner_id: user.id })
+    if (saveError) {
+      setError('Your changes were not saved. Try again in a moment.')
+      setSaving(false)
+      return
     }
-    const { data } = await supabase.from('properties').select('*').eq('owner_id', user.id).single()
+    const { data } = await supabase.from('properties').select('*').eq('owner_id', user.id).maybeSingle()
     setProperty(data)
-    setForm({ ...data, num_jetskis: String(data.num_jetskis ?? '0') })
+    setForm(toForm(data))
+    setSaving(false)
     setEditing(false)
+    window.scrollTo({ top: 0 })
   }
 
-  if (loading) return <div className="min-h-screen bg-[#0A2342] flex items-center justify-center"><p className="text-white">Loading...</p></div>
+  const cancel = () => {
+    setForm(toForm(property))
+    setEditing(false)
+    setError(null)
+  }
+
+  if (loading) {
+    return (
+      <AppShell>
+        <LoadingScreen />
+      </AppShell>
+    )
+  }
+
+  const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [key]: e.target.value })
 
   return (
-    <main className="min-h-screen bg-[#0A2342]">
-      <nav className="bg-[#1B4F8A] px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <a href="/dashboard" className="text-2xl">⚓</a>
-          <span className="text-white font-bold text-xl">Property Hub</span>
-        </div>
-        <a href="/dashboard" className="text-[#5BA4CF] hover:text-white text-sm transition-colors">Dashboard</a>
-      </nav>
-      <div className="px-6 py-8 max-w-2xl mx-auto">
-        {!property && !editing && (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-4">🏡</div>
-            <h2 className="text-white text-xl font-bold mb-2">No property yet</h2>
-            <p className="text-[#5BA4CF] mb-6">Add your lakehouse details to get started.</p>
-            <button onClick={() => setEditing(true)} className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors">
-              Add Property
-            </button>
-          </div>
-        )}
-        {editing && (
-          <div className="space-y-6">
-            <h2 className="text-white text-xl font-bold">Property Details</h2>
-            <div className="space-y-4">
-              <p className="text-[#E8A838] text-sm font-semibold uppercase tracking-wider">House Info</p>
-              {[
-                { key: 'name', label: 'Property Name', placeholder: 'Lake House' },
-                { key: 'address', label: 'Address', placeholder: '123 Lake Rd' },
-                { key: 'wifi_name', label: 'WiFi Network', placeholder: 'LakeHouse_5G' },
-                { key: 'wifi_password', label: 'WiFi Password', placeholder: 'password123' },
-                { key: 'access_code', label: 'Access Code', placeholder: '1234' },
-                { key: 'emergency_contact', label: 'Emergency Contact', placeholder: 'John: 555-1234' },
-              ].map(field => (
-                <div key={field.key}>
-                  <label className="text-[#5BA4CF] text-sm mb-1 block">{field.label}</label>
-                  <input
-                    type="text"
-                    placeholder={field.placeholder}
-                    value={form[field.key as keyof typeof form]}
-                    onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                    className="w-full bg-[#1B4F8A] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
-                  />
-                </div>
-              ))}
-              <div>
-                <label className="text-[#5BA4CF] text-sm mb-1 block">House Rules</label>
-                <textarea
-                  placeholder="No shoes inside, quiet hours after 10pm..."
-                  value={form.house_rules}
-                  onChange={(e) => setForm({ ...form, house_rules: e.target.value })}
-                  rows={4}
-                  className="w-full bg-[#1B4F8A] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
-                />
-              </div>
-            </div>
-            <div className="space-y-4">
-              <p className="text-[#E8A838] text-sm font-semibold uppercase tracking-wider">Boat and Watercraft</p>
-              {[
-                { key: 'boat_make', label: 'Boat Make', placeholder: 'Malibu' },
-                { key: 'boat_model', label: 'Boat Model', placeholder: 'Wakesetter 23 LSV' },
-                { key: 'boat_slip', label: 'Boat Slip Number', placeholder: 'Slip 12' },
-              ].map(field => (
-                <div key={field.key}>
-                  <label className="text-[#5BA4CF] text-sm mb-1 block">{field.label}</label>
-                  <input
-                    type="text"
-                    placeholder={field.placeholder}
-                    value={form[field.key as keyof typeof form]}
-                    onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                    className="w-full bg-[#1B4F8A] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
-                  />
-                </div>
-              ))}
-              <div>
-                <label className="text-[#5BA4CF] text-sm mb-1 block">Number of Jet Skis</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.num_jetskis}
-                  onChange={(e) => setForm({ ...form, num_jetskis: e.target.value })}
-                  className="w-full bg-[#1B4F8A] text-white px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
-                />
-              </div>
-              <div>
-                <label className="text-[#5BA4CF] text-sm mb-1 block">Watercraft Notes</label>
-                <textarea
-                  placeholder="Boat cover is in the storage shed..."
-                  value={form.watercraft_notes}
-                  onChange={(e) => setForm({ ...form, watercraft_notes: e.target.value })}
-                  rows={3}
-                  className="w-full bg-[#1B4F8A] text-white placeholder-[#5BA4CF] px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#1A7A8A]"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button onClick={handleSave} className="bg-[#E8A838] text-[#0A2342] px-6 py-3 rounded-lg font-semibold hover:bg-[#d4962e] transition-colors">
-                Save Property
+    <AppShell>
+      {!property && !editing && (
+        <>
+          <PageHeader title="House" />
+          <EmptyState
+            title="Add your house details"
+            body="The address, door code, WiFi, and boat info you and our team need, all in one place."
+            action={
+              <button onClick={() => setEditing(true)} className={btn('primary', 'md')}>
+                Add house details
               </button>
-              <button onClick={() => setEditing(false)} className="text-[#5BA4CF] px-6 py-3 rounded-lg hover:text-white transition-colors">
+            }
+          />
+        </>
+      )}
+
+      {editing && (
+        <form
+          className="max-w-2xl"
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleSave()
+          }}
+        >
+          <PageHeader title={property ? 'Edit house details' : 'Add house details'} description="Only you and our service team can see these." />
+
+          <fieldset className="space-y-6">
+            <legend className="text-[17px] font-semibold mb-4">House</legend>
+            {HOUSE_FIELDS.map((f) => (
+              <Field key={f.key} label={f.label} htmlFor={f.key} hint={f.hint}>
+                <input id={f.key} type="text" placeholder={f.placeholder} value={form[f.key]} onChange={set(f.key)} className={inputClass} autoComplete="off" />
+              </Field>
+            ))}
+            <Field label="House rules" htmlFor="house_rules" optional>
+              <textarea id="house_rules" rows={4} placeholder="Shoes off inside, quiet after 10 PM" value={form.house_rules} onChange={set('house_rules')} className={textareaClass} />
+            </Field>
+          </fieldset>
+
+          <fieldset className="space-y-6 mt-12">
+            <legend className="text-[17px] font-semibold mb-4">Boat and watercraft</legend>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {BOAT_FIELDS.map((f) => (
+                <Field key={f.key} label={f.label} htmlFor={f.key}>
+                  <input id={f.key} type="text" placeholder={f.placeholder} value={form[f.key]} onChange={set(f.key)} className={inputClass} />
+                </Field>
+              ))}
+              <Field label="Jet skis" htmlFor="num_jetskis">
+                <input id="num_jetskis" type="number" inputMode="numeric" min="0" value={form.num_jetskis} onChange={set('num_jetskis')} className={inputClass} />
+              </Field>
+            </div>
+            <Field label="Watercraft notes" htmlFor="watercraft_notes" optional>
+              <textarea id="watercraft_notes" rows={3} placeholder="Boat cover is in the storage shed" value={form.watercraft_notes} onChange={set('watercraft_notes')} className={textareaClass} />
+            </Field>
+          </fieldset>
+
+          <div className="mt-10 space-y-4">
+            <FormError message={error} />
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+              <button type="button" onClick={cancel} className={btn('secondary', 'lg')}>
                 Cancel
               </button>
-            </div>
-          </div>
-        )}
-        {property && !editing && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-white text-2xl font-bold">{property.name}</h2>
-              <button onClick={() => setEditing(true)} className="bg-[#1A7A8A] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#065A82] transition-colors">
-                Edit
+              <button type="submit" disabled={saving} className={btn('primary', 'lg')}>
+                {saving ? 'Saving' : 'Save details'}
               </button>
             </div>
-            <div className="space-y-3">
-              <p className="text-[#E8A838] text-sm font-semibold uppercase tracking-wider">House Info</p>
-              {[
-                { label: 'Address', value: property.address, icon: '📍' },
-                { label: 'WiFi Network', value: property.wifi_name, icon: '📶' },
-                { label: 'WiFi Password', value: property.wifi_password, icon: '🔑' },
-                { label: 'Access Code', value: property.access_code, icon: '🔐' },
-                { label: 'Emergency Contact', value: property.emergency_contact, icon: '📞' },
-              ].map(item => (
-                <div key={item.label} className="bg-[#1B4F8A] rounded-xl p-4 flex items-start gap-3">
-                  <span className="text-xl">{item.icon}</span>
-                  <div>
-                    <p className="text-[#5BA4CF] text-xs mb-1">{item.label}</p>
-                    <p className="text-white">{item.value || 'Not set'}</p>
-                  </div>
-                </div>
-              ))}
-              {property.house_rules && (
-                <div className="bg-[#1B4F8A] rounded-xl p-4">
-                  <p className="text-[#5BA4CF] text-xs mb-2">📋 House Rules</p>
-                  <p className="text-white whitespace-pre-wrap">{property.house_rules}</p>
-                </div>
-              )}
-            </div>
-            <div className="space-y-3">
-              <p className="text-[#E8A838] text-sm font-semibold uppercase tracking-wider">Boat and Watercraft</p>
-              {[
-                { label: 'Boat Make', value: property.boat_make, icon: '🚤' },
-                { label: 'Boat Model', value: property.boat_model, icon: '🚤' },
-                { label: 'Boat Slip', value: property.boat_slip, icon: '⚓' },
-                { label: 'Jet Skis', value: String(property.num_jetskis ?? 0), icon: '🏄' },
-              ].map(item => (
-                <div key={item.label} className="bg-[#1B4F8A] rounded-xl p-4 flex items-start gap-3">
-                  <span className="text-xl">{item.icon}</span>
-                  <div>
-                    <p className="text-[#5BA4CF] text-xs mb-1">{item.label}</p>
-                    <p className="text-white">{item.value || 'Not set'}</p>
-                  </div>
-                </div>
-              ))}
-              {property.watercraft_notes && (
-                <div className="bg-[#1B4F8A] rounded-xl p-4">
-                  <p className="text-[#5BA4CF] text-xs mb-2">📝 Watercraft Notes</p>
-                  <p className="text-white whitespace-pre-wrap">{property.watercraft_notes}</p>
-                </div>
-              )}
-            </div>
           </div>
-        )}
-      </div>
-    </main>
+        </form>
+      )}
+
+      {property && !editing && (
+        <>
+          <PageHeader
+            title={property.name || 'House'}
+            description={property.address || undefined}
+            action={
+              <button onClick={() => setEditing(true)} className={btn('secondary', 'md', 'w-full sm:w-auto')}>
+                Edit details
+              </button>
+            }
+          />
+
+          <div className="grid gap-8 lg:grid-cols-2">
+            <section>
+              <h2 className="text-[17px] font-semibold mb-3">Getting in</h2>
+              <Card>
+                <dl className="divide-y divide-line text-[15px]">
+                  <Item label="Door code">
+                    <Secret value={property.access_code} label="door code" />
+                  </Item>
+                  <Item label="WiFi network">{property.wifi_name}</Item>
+                  <Item label="WiFi password">
+                    <Secret value={property.wifi_password} label="WiFi password" />
+                  </Item>
+                  <Item label="Emergency contact">{property.emergency_contact}</Item>
+                </dl>
+              </Card>
+              {property.house_rules && (
+                <>
+                  <h2 className="text-[17px] font-semibold mt-8 mb-3">House rules</h2>
+                  <Card className="px-5 py-4">
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{property.house_rules}</p>
+                  </Card>
+                </>
+              )}
+            </section>
+
+            <section>
+              <h2 className="text-[17px] font-semibold mb-3">Boat and watercraft</h2>
+              <Card>
+                <dl className="divide-y divide-line text-[15px]">
+                  <Item label="Boat">{[property.boat_make, property.boat_model].filter(Boolean).join(' ')}</Item>
+                  <Item label="Slip">{property.boat_slip}</Item>
+                  <Item label="Jet skis">{String(property.num_jetskis ?? 0)}</Item>
+                </dl>
+              </Card>
+              {property.watercraft_notes && (
+                <>
+                  <h2 className="text-[17px] font-semibold mt-8 mb-3">Watercraft notes</h2>
+                  <Card className="px-5 py-4">
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{property.watercraft_notes}</p>
+                  </Card>
+                </>
+              )}
+            </section>
+          </div>
+        </>
+      )}
+    </AppShell>
+  )
+}
+
+function Item({ label, children }: { label: string; children: React.ReactNode }) {
+  const empty = children === '' || children == null
+  return (
+    <div className="flex items-start justify-between gap-6 px-5 py-4">
+      <dt className="text-ink-2 shrink-0">{label}</dt>
+      <dd className="text-right">{empty ? <span className="text-ink-3">Not set</span> : children}</dd>
+    </div>
   )
 }

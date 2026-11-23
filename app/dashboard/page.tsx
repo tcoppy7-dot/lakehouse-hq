@@ -1,123 +1,255 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { supabase } from '../lib/supabase'
+import AppShell from '../components/AppShell'
+import Secret from '../components/Secret'
+import { Card, EmptyState, LoadingScreen, SectionTitle, StatusChip, btn } from '../components/ui'
+import { firstName, formatDate, formatShortDate, formatWhen, isUpcoming, todayKey } from '../lib/format'
+
+const STATUS_NOTE: Record<string, string> = {
+  requested: 'Waiting for us to confirm. We confirm within 24 hours.',
+  confirmed: 'Confirmed. You will get a photo when it is done.',
+  in_progress: 'Our team is working on it now.',
+}
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
-  const [recentTask, setRecentTask] = useState<any>(null)
   const router = useRouter()
+  const [ready, setReady] = useState(false)
+  const [name, setName] = useState('')
+  const [tasks, setTasks] = useState<any[]>([])
+  const [property, setProperty] = useState<any>(null)
+  const [inventoryCount, setInventoryCount] = useState(0)
+  const [packingCount, setPackingCount] = useState(0)
 
   useEffect(() => {
-    const getUser = async () => {
+    const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
       }
-      setUser(user)
-      const { data: tasks } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-      if (tasks && tasks.length > 0) setRecentTask(tasks[0])
+      setName(firstName(user))
+      const [t, p, inv, pack] = await Promise.all([
+        supabase.from('tasks').select('*').eq('owner_id', user.id).order('scheduled_date', { ascending: true }),
+        supabase.from('properties').select('*').eq('owner_id', user.id).maybeSingle(),
+        supabase.from('inventory').select('id', { count: 'exact', head: true }).eq('owner_id', user.id),
+        supabase.from('packing_lists').select('id', { count: 'exact', head: true }).eq('owner_id', user.id),
+      ])
+      setTasks(t.data || [])
+      setProperty(p.data)
+      setInventoryCount(inv.count || 0)
+      setPackingCount(pack.count || 0)
+      setReady(true)
     }
-    getUser()
+    load()
   }, [router])
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
+  if (!ready) {
+    return (
+      <AppShell>
+        <LoadingScreen />
+      </AppShell>
+    )
   }
 
-  const statusColor = (status: string) => {
-    if (status === 'requested') return 'bg-[#E8A838] text-[#0A2342]'
-    if (status === 'confirmed') return 'bg-[#1A7A8A] text-white'
-    if (status === 'in_progress') return 'bg-purple-600 text-white'
-    if (status === 'completed') return 'bg-green-600 text-white'
-    return 'bg-[#1B4F8A] text-white'
-  }
-
-  if (!user) return null
+  const upcoming = tasks.filter(isUpcoming)
+  const next = upcoming[0]
+  const alsoScheduled = upcoming.slice(1, 4)
+  const lastDone = [...tasks]
+    .filter((t) => t.status === 'completed')
+    .sort((a, b) => (b.scheduled_date || '').localeCompare(a.scheduled_date || ''))[0]
+  const unconfirmedPast = tasks.filter((t) => t.status === 'requested' && t.scheduled_date && t.scheduled_date < todayKey()).length
 
   return (
-    <main className="min-h-screen bg-[#0A2342]">
-      <nav className="bg-[#0A2342] px-6 py-4 flex items-center justify-between border-b border-[#1B4F8A]">
-        <Image src="/logo.png" alt="Lakehouse HQ" width={140} height={48} className="object-contain" loading="eager" />
-        <button
-          onClick={handleSignOut}
-          className="text-[#5BA4CF] hover:text-white text-sm transition-colors"
-        >
-          Sign Out
-        </button>
-      </nav>
-
-      <div className="relative h-48 overflow-hidden">
-        <Image src="/sunset.jpg" alt="Lake sunset" fill className="object-cover" sizes="100vw" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(10,35,66,0.4) 0%, rgba(10,35,66,0.85) 100%)' }} />
-        <div className="relative z-10 px-6 h-full flex flex-col justify-end pb-6 max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-white">Welcome home.</h1>
-          <p className="text-[#5BA4CF] text-sm mt-1">Here is everything at a glance.</p>
+    <AppShell>
+      {/* Greeting and primary action */}
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between mb-8 sm:mb-10">
+        <div>
+          <h1 className="text-[30px] sm:text-[36px] font-semibold tracking-[-0.02em] leading-[1.1]">
+            {greeting()}
+            {name ? `, ${name}` : ''}
+          </h1>
+          {property?.name && <p className="mt-2 text-[16px] text-ink-2">{property.name}</p>}
         </div>
+        <Link href="/tasks?new=1" className={btn('primary', 'lg', 'w-full sm:w-auto')}>
+          Request a service
+        </Link>
       </div>
 
-      <div className="px-6 py-6 max-w-4xl mx-auto">
-        {recentTask && (
-          <a href="/tasks" className="block mb-6 bg-[#1B4F8A] rounded-2xl p-4 hover:bg-[#1A7A8A] transition-colors">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[#5BA4CF] text-xs mb-1">Most recent request</p>
-                <p className="text-white font-bold">{recentTask.title}</p>
-                <p className="text-[#5BA4CF] text-sm mt-0.5">{recentTask.scheduled_date || 'No date set'}</p>
-              </div>
-              <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColor(recentTask.status)}`}>
-                {recentTask.status === 'in_progress' ? 'In Progress' : recentTask.status.charAt(0).toUpperCase() + recentTask.status.slice(1)}
-              </span>
-            </div>
-          </a>
-        )}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-10">
+        {/* Left: visits */}
+        <div className="space-y-8">
+          <section aria-labelledby="next-visit">
+            <SectionTitle
+              action={
+                <Link href="/tasks" className="text-[14px] font-medium text-lake hover:text-lake-dark">
+                  All requests
+                </Link>
+              }
+            >
+              <span id="next-visit">Next visit</span>
+            </SectionTitle>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <a href="/property" className="relative rounded-2xl overflow-hidden h-44 group">
-            <Image src="/property.jpg" alt="Property Hub" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.9) 0%, rgba(10,35,66,0.3) 100%)' }} />
-            <div className="absolute bottom-0 left-0 p-5">
-              <p className="text-white font-bold text-lg">Property Hub</p>
-              <p className="text-[#5BA4CF] text-sm">WiFi, access codes, house info</p>
-            </div>
-          </a>
+            {next ? (
+              <Card className="p-6 sm:p-7">
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-[22px] sm:text-[24px] font-semibold tracking-[-0.015em] leading-tight">{next.title}</p>
+                  <StatusChip status={next.status} />
+                </div>
+                <p className="mt-2 text-[16px] text-ink">{formatWhen(next.scheduled_date, next.scheduled_time)}</p>
+                {STATUS_NOTE[next.status] && <p className="mt-4 text-[15px] text-ink-2">{STATUS_NOTE[next.status]}</p>}
+                {next.description && (
+                  <p className="mt-4 rounded-xl bg-sunk px-4 py-3 text-[15px] text-ink-2">
+                    <span className="text-ink font-medium">Your note: </span>
+                    {next.description}
+                  </p>
+                )}
+                {alsoScheduled.length > 0 && (
+                  <div className="mt-6 border-t border-line pt-4">
+                    <p className="text-[13px] font-medium text-ink-3 mb-2">Also scheduled</p>
+                    <ul className="divide-y divide-line">
+                      {alsoScheduled.map((t) => (
+                        <li key={t.id} className="flex items-center justify-between gap-4 py-2.5 text-[15px]">
+                          <span className="truncate">{t.title}</span>
+                          <span className="text-ink-2 whitespace-nowrap">{formatShortDate(t.scheduled_date)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </Card>
+            ) : (
+              <Card className="p-6 sm:p-7">
+                <p className="text-[20px] font-semibold tracking-[-0.01em]">Nothing scheduled</p>
+                <p className="mt-2 text-[15px] text-ink-2 max-w-md">
+                  Request a service and your next visit will show up here, with its status as we confirm and finish it.
+                </p>
+                {unconfirmedPast > 0 && (
+                  <p className="mt-4 rounded-xl bg-sunk px-4 py-3 text-[14px] text-ink-2">
+                    {unconfirmedPast === 1 ? 'One past request was' : `${unconfirmedPast} past requests were`} never confirmed.{' '}
+                    <Link href="/tasks" className="font-medium text-lake hover:text-lake-dark">
+                      Review requests
+                    </Link>
+                  </p>
+                )}
+              </Card>
+            )}
+          </section>
 
-          <a href="/tasks" className="relative rounded-2xl overflow-hidden h-44 group">
-            <Image src="/jetskiopen.jpg" alt="Request a Task" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.9) 0%, rgba(10,35,66,0.3) 100%)' }} />
-            <div className="absolute bottom-0 left-0 p-5">
-              <p className="text-white font-bold text-lg">Request a Task</p>
-              <p className="text-[#5BA4CF] text-sm">Schedule services and maintenance</p>
-            </div>
-          </a>
+          <section aria-labelledby="last-done">
+            <SectionTitle>
+              <span id="last-done">Last finished</span>
+            </SectionTitle>
+            {lastDone ? (
+              <Card className="overflow-hidden">
+                {lastDone.photo_url && (
+                  // Completion photos come from Supabase Storage, so a plain img keeps the remote config simple.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={lastDone.photo_url} alt={`Completion photo for ${lastDone.title}`} className="w-full aspect-[16/9] object-cover bg-sunk" />
+                )}
+                <div className="p-5 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[16px] font-semibold">{lastDone.title}</p>
+                    <p className="mt-1 text-[14px] text-ink-2">{formatDate(lastDone.scheduled_date)}</p>
+                  </div>
+                  <StatusChip status="completed" />
+                </div>
+              </Card>
+            ) : (
+              <p className="text-[15px] text-ink-2">When we finish a job, the completion photo will appear here.</p>
+            )}
+          </section>
+        </div>
 
-          <a href="/inventory" className="relative rounded-2xl overflow-hidden h-44 group">
-            <Image src="/pantry.jpg" alt="Inventory" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.9) 0%, rgba(10,35,66,0.3) 100%)' }} />
-            <div className="absolute bottom-0 left-0 p-5">
-              <p className="text-white font-bold text-lg">Inventory</p>
-              <p className="text-[#5BA4CF] text-sm">Track what is at the house</p>
-            </div>
-          </a>
+        {/* Right: house */}
+        <div className="space-y-8">
+          <section aria-labelledby="house">
+            <SectionTitle
+              action={
+                property && (
+                  <Link href="/property" className="text-[14px] font-medium text-lake hover:text-lake-dark">
+                    All details
+                  </Link>
+                )
+              }
+            >
+              <span id="house">House</span>
+            </SectionTitle>
+            {property ? (
+              <Card>
+                <dl className="divide-y divide-line text-[15px]">
+                  {property.address && (
+                    <div className="px-5 py-4">
+                      <dt className="text-[13px] text-ink-3">Address</dt>
+                      <dd className="mt-1">{property.address}</dd>
+                    </div>
+                  )}
+                  <div className="px-5 py-4">
+                    <dt className="text-[13px] text-ink-3">Door code</dt>
+                    <dd className="mt-1">
+                      <Secret value={property.access_code} label="door code" />
+                    </dd>
+                  </div>
+                  <div className="px-5 py-4">
+                    <dt className="text-[13px] text-ink-3">WiFi</dt>
+                    <dd className="mt-1">{property.wifi_name || <span className="text-ink-3">Not set</span>}</dd>
+                    {property.wifi_password && (
+                      <dd className="mt-1.5">
+                        <Secret value={property.wifi_password} label="WiFi password" />
+                      </dd>
+                    )}
+                  </div>
+                </dl>
+              </Card>
+            ) : (
+              <EmptyState
+                title="Add your house details"
+                body="Keep the address, door code, WiFi, and boat info in one place for you and our team."
+                action={
+                  <Link href="/property" className={btn('secondary', 'md')}>
+                    Add house details
+                  </Link>
+                }
+              />
+            )}
+          </section>
 
-          <a href="/packing" className="relative rounded-2xl overflow-hidden h-44 group">
-            <Image src="/packing.png" alt="Packing Lists" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10,35,66,0.9) 0%, rgba(10,35,66,0.3) 100%)' }} />
-            <div className="absolute bottom-0 left-0 p-5">
-              <p className="text-white font-bold text-lg">Packing Lists</p>
-              <p className="text-[#5BA4CF] text-sm">Share trip lists with guests</p>
-            </div>
-          </a>
+          <section aria-label="Lists">
+            <Card>
+              <Link href="/inventory" className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-sunk/60 rounded-t-2xl transition-colors">
+                <span>
+                  <span className="block text-[15px] font-medium">Inventory</span>
+                  <span className="block text-[14px] text-ink-2">
+                    {inventoryCount === 0 ? 'Nothing tracked yet' : `${inventoryCount} ${inventoryCount === 1 ? 'item' : 'items'} tracked`}
+                  </span>
+                </span>
+                <span aria-hidden className="text-ink-3 text-xl">›</span>
+              </Link>
+              <Link
+                href="/packing"
+                className="flex items-center justify-between gap-4 px-5 py-4 border-t border-line hover:bg-sunk/60 rounded-b-2xl transition-colors"
+              >
+                <span>
+                  <span className="block text-[15px] font-medium">Packing lists</span>
+                  <span className="block text-[14px] text-ink-2">
+                    {packingCount === 0 ? 'Make one to share with guests' : `${packingCount} ${packingCount === 1 ? 'list' : 'lists'}`}
+                  </span>
+                </span>
+                <span aria-hidden className="text-ink-3 text-xl">›</span>
+              </Link>
+            </Card>
+          </section>
         </div>
       </div>
-    </main>
+    </AppShell>
   )
 }
