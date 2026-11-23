@@ -23,9 +23,9 @@ type Variant = 'primary' | 'secondary' | 'quiet' | 'danger'
 type Size = 'md' | 'lg' | 'sm'
 
 const base =
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none select-none'
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-colors disabled:opacity-40 disabled:pointer-events-none select-none'
 const variants: Record<Variant, string> = {
-  primary: 'bg-lake text-white hover:bg-lake-dark',
+  primary: 'bg-ink text-white hover:bg-navy-hover',
   secondary: 'bg-surface text-ink border border-line hover:border-ink-3',
   quiet: 'text-ink-2 hover:text-ink hover:bg-sunk',
   danger: 'text-danger hover:bg-danger/8',
@@ -42,9 +42,9 @@ export function btn(variant: Variant = 'primary', size: Size = 'md', extra = '')
 
 /* ---------- Form fields ---------- */
 export const inputClass =
-  'w-full h-12 rounded-xl border border-line bg-surface px-4 text-[16px] text-ink placeholder:text-ink-3 outline-none transition-colors focus:border-lake focus:ring-3 focus:ring-lake/15'
+  'w-full h-12 rounded-lg border border-line bg-surface px-4 text-[16px] text-ink placeholder:text-ink-3 outline-none transition-colors focus:border-lake focus:ring-3 focus:ring-lake/15'
 export const textareaClass =
-  'w-full rounded-xl border border-line bg-surface px-4 py-3 text-[16px] text-ink placeholder:text-ink-3 outline-none transition-colors focus:border-lake focus:ring-3 focus:ring-lake/15 resize-y'
+  'w-full rounded-lg border border-line bg-surface px-4 py-3 text-[16px] text-ink placeholder:text-ink-3 outline-none transition-colors focus:border-lake focus:ring-3 focus:ring-lake/15 resize-y'
 
 export function Field({
   label,
@@ -85,6 +85,7 @@ const STATUS: Record<string, { label: string; className: string }> = {
   requested: { label: 'Requested', className: 'bg-sunk text-ink-2' },
   confirmed: { label: 'Confirmed', className: 'bg-lake-tint text-lake-dark' },
   in_progress: { label: 'In progress', className: 'bg-lake text-white' },
+  // completed stays dark navy so done jobs read as settled
   completed: { label: 'Done', className: 'bg-ink text-white' },
 }
 
@@ -95,7 +96,7 @@ export function statusLabel(status: string) {
 export function StatusChip({ status }: { status: string }) {
   const s = STATUS[status] ?? { label: status, className: 'bg-sunk text-ink-2' }
   return (
-    <span className={`inline-flex items-center h-6 px-2.5 rounded-full text-[12.5px] font-medium whitespace-nowrap ${s.className}`}>
+    <span className={`inline-flex items-center h-6 px-2 rounded-md text-[12.5px] font-semibold whitespace-nowrap ${s.className}`}>
       {s.label}
     </span>
   )

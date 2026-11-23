@@ -39,14 +39,14 @@ function PhonePreview() {
         </div>
         <div className="px-5 pt-5">
           <p className="text-[22px] font-semibold tracking-[-0.02em]">Good morning</p>
-          <div className="mt-3 h-10 rounded-full bg-lake text-white text-[14px] font-medium grid place-items-center">Request a service</div>
+          <div className="mt-3 h-10 rounded-lg bg-ink text-white text-[14px] font-semibold grid place-items-center">Request a service</div>
         </div>
         <div className="px-5 pt-5">
           <p className="text-[13px] font-semibold mb-2">Next visit</p>
           <div className="rounded-2xl border border-line bg-surface p-4">
             <div className="flex items-start justify-between gap-2">
               <p className="text-[16px] font-semibold leading-tight">Jet Ski Cover Off</p>
-              <span className="h-5 px-2 rounded-full text-[11px] font-medium bg-lake-tint text-lake-dark grid place-items-center">Confirmed</span>
+              <span className="h-5 px-1.5 rounded-md text-[11px] font-medium bg-lake-tint text-lake-dark grid place-items-center">Confirmed</span>
             </div>
             <p className="mt-1 text-[13px]">Saturday, May 23 at 9:00 AM</p>
             <p className="mt-2 text-[12px] text-ink-2">You will get a photo when it is done.</p>
@@ -63,7 +63,7 @@ function PhonePreview() {
                 <p className="text-[14px] font-semibold">Boat Cover On</p>
                 <p className="text-[12px] text-ink-2">Sunday, May 17</p>
               </div>
-              <span className="h-5 px-2 rounded-full text-[11px] font-medium bg-ink text-white grid place-items-center">Done</span>
+              <span className="h-5 px-1.5 rounded-md text-[11px] font-medium bg-ink text-white grid place-items-center">Done</span>
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/signup" className="mt-10 lg:mt-auto inline-flex h-13 items-center justify-center rounded-full bg-white text-ink font-medium hover:bg-white/90 transition-colors">
+                <Link href="/signup" className="mt-10 lg:mt-auto inline-flex h-13 items-center justify-center rounded-lg bg-white text-ink font-semibold hover:bg-white/90 transition-colors">
                   Get started
                 </Link>
               </div>

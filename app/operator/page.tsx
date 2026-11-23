@@ -95,14 +95,14 @@ export default function OperatorDashboard() {
         title="Jobs"
         description={`Customer requests for you to confirm, do, and photograph. ${counts.requested ? `${counts.requested} waiting to be confirmed.` : 'Nothing waiting to be confirmed.'}`}
         action={
-          <div className="inline-flex rounded-full bg-sunk p-1" role="tablist" aria-label="View">
+          <div className="inline-flex rounded-lg bg-sunk p-1" role="tablist" aria-label="View">
             {(['list', 'calendar'] as const).map((v) => (
               <button
                 key={v}
                 role="tab"
                 aria-selected={view === v}
                 onClick={() => setView(v)}
-                className={`h-8 px-4 rounded-full text-[14px] font-medium transition-colors ${view === v ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
+                className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors ${view === v ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
               >
                 {v === 'list' ? 'List' : 'Calendar'}
               </button>
@@ -124,7 +124,7 @@ export default function OperatorDashboard() {
                 role="tab"
                 aria-selected={filter === f.key}
                 onClick={() => setFilter(f.key)}
-                className={`h-9 px-4 rounded-full text-[14px] font-medium whitespace-nowrap transition-colors ${
+                className={`h-9 px-4 rounded-lg text-[14px] font-medium whitespace-nowrap transition-colors ${
                   filter === f.key ? 'bg-ink text-white' : 'bg-surface border border-line text-ink-2 hover:text-ink'
                 }`}
               >

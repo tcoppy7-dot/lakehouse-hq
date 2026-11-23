@@ -78,16 +78,16 @@ export default function AppShell({ children, wide = false, focused = false }: { 
   return (
     <div className="flex-1 flex flex-col min-h-dvh">
       <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur-md">
-        <div className={`mx-auto ${wide ? 'max-w-6xl' : 'max-w-5xl'} h-16 px-4 sm:px-8 flex items-center gap-3 sm:gap-8`}>
+        <div className="mx-auto max-w-6xl h-16 px-4 sm:px-8 flex items-center gap-3 sm:gap-6">
           <Wordmark href="/dashboard" height={22} />
-          <nav aria-label="Main" className="hidden lg:flex items-center gap-1 text-[15px]">
+          <nav aria-label="Main" className="hidden lg:flex items-center gap-0.5 text-[15px] whitespace-nowrap">
             {NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={isActive(item.href) ? 'page' : undefined}
-                className={`h-9 px-3 rounded-full inline-flex items-center transition-colors ${
-                  isActive(item.href) ? 'bg-sunk text-ink font-medium' : 'text-ink-2 hover:text-ink'
+                className={`relative h-16 px-3 inline-flex items-center whitespace-nowrap transition-colors ${
+                  isActive(item.href) ? 'text-ink font-semibold after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-lake' : 'text-ink-2 hover:text-ink'
                 }`}
               >
                 {item.label}
@@ -104,7 +104,7 @@ export default function AppShell({ children, wide = false, focused = false }: { 
               >
                 Jobs
                 {toConfirm > 0 && (
-                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-lake text-white text-[12px] grid place-items-center tabular-nums" aria-label={`${toConfirm} to confirm`}>
+                  <span className="min-w-5 h-5 px-1.5 rounded-md bg-lake text-white text-[12px] grid place-items-center tabular-nums" aria-label={`${toConfirm} to confirm`}>
                     {toConfirm}
                   </span>
                 )}

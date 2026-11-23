@@ -2,23 +2,23 @@
 
 /*
   Lakehouse HQ design tokens
-  paper: warm white page background
-  surface: cards and inputs
-  ink: primary text, ink-2 secondary, ink-3 tertiary
-  line: hairlines and borders
-  lake: the single accent, used for primary actions, links, focus, and active states
+  Colors come from the Lakehouse HQ logo.
+  paper / surface: white
+  ink: logo navy, used for text and primary buttons
+  lake: logo teal, used for links, focus, and active states
 */
 @theme {
-  --color-paper: #FAF9F6;
+  --color-paper: #FFFFFF;
   --color-surface: #FFFFFF;
-  --color-sunk: #F2F0EB;
-  --color-ink: #1B1F24;
-  --color-ink-2: #565C63;
-  --color-ink-3: #868B91;
-  --color-line: #E6E2DA;
-  --color-lake: #3D6B84;
-  --color-lake-dark: #2F5669;
-  --color-lake-tint: #E7EEF2;
+  --color-sunk: #F2F5F8;
+  --color-ink: #0A2342;
+  --color-ink-2: #4A5A6E;
+  --color-ink-3: #7B8796;
+  --color-line: #DFE5EB;
+  --color-navy-hover: #14335C;
+  --color-lake: #1A7A8A;
+  --color-lake-dark: #135E6B;
+  --color-lake-tint: #E2F1F3;
   --color-danger: #B3412F;
 
   --font-sans: var(--font-text), ui-sans-serif, system-ui, sans-serif;

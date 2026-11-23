@@ -233,14 +233,14 @@ export default function Tasks() {
             />
           ) : (
             <>
-              <div className="mb-6 inline-flex rounded-full bg-sunk p-1" role="tablist" aria-label="View">
+              <div className="mb-6 inline-flex rounded-lg bg-sunk p-1" role="tablist" aria-label="View">
                 {(['list', 'calendar'] as const).map((v) => (
                   <button
                     key={v}
                     role="tab"
                     aria-selected={view === v}
                     onClick={() => setView(v)}
-                    className={`h-8 px-4 rounded-full text-[14px] font-medium transition-colors ${view === v ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
+                    className={`h-8 px-4 rounded-md text-[14px] font-medium transition-colors ${view === v ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
                   >
                     {v === 'list' ? 'List' : 'Calendar'}
                   </button>
@@ -325,14 +325,14 @@ export default function Tasks() {
             {selected.hasToggle && (
               <fieldset>
                 <legend className="block text-[14px] font-medium mb-2">Cover on or off?</legend>
-                <div className="grid grid-cols-2 gap-2 rounded-full bg-sunk p-1">
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-sunk p-1">
                   {(['On', 'Off'] as const).map((opt) => (
                     <button
                       key={opt}
                       type="button"
                       aria-pressed={toggleOption === opt}
                       onClick={() => setToggleOption(opt)}
-                      className={`h-10 rounded-full text-[15px] font-medium transition-colors ${toggleOption === opt ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
+                      className={`h-10 rounded-md text-[15px] font-medium transition-colors ${toggleOption === opt ? 'bg-surface text-ink shadow-[0_1px_2px_rgba(27,31,36,0.08)]' : 'text-ink-2'}`}
                     >
                       {selected.title === 'Patio Furniture' ? (opt === 'On' ? 'Set up' : 'Store') : opt === 'On' ? 'Put on' : 'Take off'}
                     </button>
@@ -491,7 +491,7 @@ function TaskList({ tasks, past = false }: { tasks: any[]; past?: boolean }) {
                   {task.description && <p className="mt-1 text-[14px] text-ink-3 line-clamp-2">{task.description}</p>}
                 </div>
                 {stale ? (
-                  <span className="inline-flex items-center h-6 px-2.5 rounded-full text-[12.5px] font-medium bg-sunk text-ink-3 whitespace-nowrap">Not confirmed</span>
+                  <span className="inline-flex items-center h-6 px-2 rounded-md text-[12.5px] font-semibold bg-sunk text-ink-3 whitespace-nowrap">Not confirmed</span>
                 ) : (
                   <StatusChip status={task.status} />
                 )}
