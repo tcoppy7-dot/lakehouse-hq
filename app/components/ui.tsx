@@ -1,12 +1,20 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { ReactNode } from 'react'
 
 /* ---------- Wordmark ---------- */
-export function Wordmark({ href = '/', className = '' }: { href?: string; className?: string }) {
+export function Wordmark({ href = '/', height = 24, className = '' }: { href?: string; height?: number; className?: string }) {
+  // logo-wordmark-dark.png is the lettering from the Lakehouse HQ logo, recolored for light backgrounds.
   return (
-    <Link href={href} className={`font-display text-[21px] leading-none whitespace-nowrap tracking-[-0.01em] text-ink ${className}`} aria-label="Lakehouse HQ">
-      Lakehouse <span className="text-ink-2">HQ</span>
+    <Link href={href} className={`inline-flex shrink-0 ${className}`} aria-label="Lakehouse HQ home">
+      <Image src="/logo-wordmark-dark.png" alt="Lakehouse HQ" width={Math.round(height * 5.97)} height={height} priority style={{ height, width: 'auto' }} />
     </Link>
+  )
+}
+
+export function FullLogo({ width = 200, className = '' }: { width?: number; className?: string }) {
+  return (
+    <Image src="/logo-dark.png" alt="Lakehouse HQ" width={width} height={Math.round(width * 0.74)} className={className} style={{ width, height: 'auto' }} />
   )
 }
 

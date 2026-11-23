@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
-import AppShell from '../components/AppShell'
+import AppShell, { NavIcon } from '../components/AppShell'
 import Secret from '../components/Secret'
 import { Card, EmptyState, LoadingScreen, SectionTitle, StatusChip, btn } from '../components/ui'
 import { firstName, formatDate, formatShortDate, formatWhen, isUpcoming, todayKey } from '../lib/format'
@@ -86,12 +86,12 @@ export default function Dashboard() {
       </div>
 
       {/* Phones read top to bottom: next visit, house, then the last finished job. */}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-10 lg:items-start">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-x-10 lg:gap-y-10 lg:items-start">
         <section aria-labelledby="next-visit" className="lg:col-start-1 lg:row-start-1">
           <SectionTitle
             action={
               <Link href="/tasks" className="text-[14px] font-medium text-lake hover:text-lake-dark">
-                All requests
+                View all
               </Link>
             }
           >
@@ -144,13 +144,50 @@ export default function Dashboard() {
           )}
         </section>
 
-        <div className="space-y-8 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+        {/* Shortcuts to every section, so nothing is more than one tap from Home */}
+        <nav aria-label="Go to" className="lg:col-start-1 lg:col-span-2 lg:row-start-2">
+          <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[
+              { href: '/tasks', icon: 'list' as const, title: 'Services', body: 'Request or check on a service' },
+              { href: '/property', icon: 'key' as const, title: 'House info', body: 'Door code, WiFi, and boat details' },
+              {
+                href: '/inventory',
+                icon: 'box' as const,
+                title: 'Inventory',
+                body: inventoryCount === 0 ? 'Track what is at the house' : `${inventoryCount} ${inventoryCount === 1 ? 'item' : 'items'} tracked`,
+              },
+              {
+                href: '/packing',
+                icon: 'bag' as const,
+                title: 'Packing lists',
+                body: packingCount === 0 ? 'Share what to bring with guests' : `${packingCount} ${packingCount === 1 ? 'list' : 'lists'} for guests`,
+              },
+            ].map((t) => (
+              <li key={t.href}>
+                <Link
+                  href={t.href}
+                  className="flex h-full flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:p-5 transition-colors hover:border-ink-3"
+                >
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-lake-tint text-lake">
+                    <NavIcon name={t.icon} />
+                  </span>
+                  <span>
+                    <span className="block text-[16px] font-semibold">{t.title}</span>
+                    <span className="mt-0.5 block text-[14px] leading-snug text-ink-2">{t.body}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="lg:col-start-2 lg:row-start-1">
           <section aria-labelledby="house">
             <SectionTitle
               action={
                 property && (
                   <Link href="/property" className="text-[14px] font-medium text-lake hover:text-lake-dark">
-                    All details
+                    House info
                   </Link>
                 )
               }
@@ -195,35 +232,9 @@ export default function Dashboard() {
               />
             )}
           </section>
-
-          <section aria-label="Lists">
-            <Card>
-              <Link href="/inventory" className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-sunk/60 rounded-t-2xl transition-colors">
-                <span>
-                  <span className="block text-[15px] font-medium">Inventory</span>
-                  <span className="block text-[14px] text-ink-2">
-                    {inventoryCount === 0 ? 'Nothing tracked yet' : `${inventoryCount} ${inventoryCount === 1 ? 'item' : 'items'} tracked`}
-                  </span>
-                </span>
-                <span aria-hidden className="text-ink-3 text-xl">›</span>
-              </Link>
-              <Link
-                href="/packing"
-                className="flex items-center justify-between gap-4 px-5 py-4 border-t border-line hover:bg-sunk/60 rounded-b-2xl transition-colors"
-              >
-                <span>
-                  <span className="block text-[15px] font-medium">Packing lists</span>
-                  <span className="block text-[14px] text-ink-2">
-                    {packingCount === 0 ? 'Make one to share with guests' : `${packingCount} ${packingCount === 1 ? 'list' : 'lists'}`}
-                  </span>
-                </span>
-                <span aria-hidden className="text-ink-3 text-xl">›</span>
-              </Link>
-            </Card>
-          </section>
         </div>
 
-        <section aria-labelledby="last-done" className="lg:col-start-1 lg:row-start-2">
+        <section aria-labelledby="last-done" className="lg:col-start-1 lg:row-start-3">
           <SectionTitle>
             <span id="last-done">Last finished</span>
           </SectionTitle>

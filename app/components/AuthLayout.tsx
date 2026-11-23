@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { Wordmark } from './ui'
+import { FullLogo } from './ui'
 
 export default function AuthLayout({
   title,
@@ -15,11 +15,11 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex-1 flex flex-col min-h-dvh">
-      <header className="h-16 px-5 sm:px-8 flex items-center">
-        <Wordmark />
-      </header>
-      <main className="flex-1 flex items-start sm:items-center justify-center px-5 pt-8 pb-16">
+      <main className="flex-1 flex items-start sm:items-center justify-center px-5 pt-10 pb-16">
         <div className="w-full max-w-[400px]">
+          <Link href="/" aria-label="Lakehouse HQ home" className="inline-block mb-10">
+            <FullLogo width={180} />
+          </Link>
           <h1 className="text-[30px] font-semibold tracking-[-0.02em] leading-tight">{title}</h1>
           <p className="mt-2 text-[16px] text-ink-2">{description}</p>
           <div className="mt-8">{children}</div>

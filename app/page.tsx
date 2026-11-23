@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import ServiceCarousel from './components/home/ServiceCarousel'
-import { Wordmark, btn } from './components/ui'
+import { FullLogo, Wordmark, btn } from './components/ui'
 
 const prices = [
   { task: 'Boat cover on or off', price: '$20' },
@@ -35,9 +35,7 @@ function PhonePreview() {
           <span>100%</span>
         </div>
         <div className="px-5 pt-5">
-          <span className="font-display text-[16px]">
-            Lakehouse <span className="text-ink-2">HQ</span>
-          </span>
+          <Image src="/logo-wordmark-dark.png" alt="" width={108} height={18} style={{ height: 18, width: 'auto' }} />
         </div>
         <div className="px-5 pt-5">
           <p className="text-[22px] font-semibold tracking-[-0.02em]">Good morning</p>
@@ -218,21 +216,22 @@ export default function Home() {
 
         {/* Closing */}
         <section className="border-t border-line">
-          <div className="max-w-6xl mx-auto px-5 sm:px-10 py-20 sm:py-24 flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-6xl mx-auto px-5 sm:px-10 py-20 sm:py-24 grid gap-10 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <div>
               <h2 className="text-[clamp(1.9rem,4vw,2.75rem)] font-semibold tracking-[-0.025em] leading-[1.1]">Add your house in five minutes.</h2>
               <p className="mt-3 text-[17px] text-ink-2">We reach out within one business day.</p>
+              <Link href="/signup" className={btn('primary', 'lg', 'mt-8')}>
+                Create an account
+              </Link>
             </div>
-            <Link href="/signup" className={btn('primary', 'lg', 'shrink-0')}>
-              Create an account
-            </Link>
+            <FullLogo width={260} className="justify-self-center md:justify-self-end" />
           </div>
         </section>
       </main>
 
       <footer className="border-t border-line">
         <div className="max-w-6xl mx-auto px-5 sm:px-10 py-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between text-[14px] text-ink-2">
-          <Wordmark className="!text-[18px]" />
+          <Wordmark height={20} />
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             <a href="#services" className="hover:text-ink">Services</a>
             <a href="#pricing" className="hover:text-ink">Pricing</a>

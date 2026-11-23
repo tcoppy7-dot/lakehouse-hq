@@ -102,7 +102,7 @@ export default function PropertyHub() {
     <AppShell>
       {!property && !editing && (
         <>
-          <PageHeader title="House" />
+          <PageHeader title="House info" />
           <EmptyState
             title="Add your house details"
             body="The address, door code, WiFi, and boat info you and our team need, all in one place."
@@ -123,7 +123,7 @@ export default function PropertyHub() {
             handleSave()
           }}
         >
-          <PageHeader title={property ? 'Edit house details' : 'Add house details'} description="Only you and our service team can see these." />
+          <PageHeader title={property ? 'Edit house info' : 'Add house info'} description="Only you and our service team can see these." />
 
           <fieldset className="space-y-6">
             <legend className="text-[17px] font-semibold mb-4">House</legend>
@@ -171,11 +171,11 @@ export default function PropertyHub() {
       {property && !editing && (
         <>
           <PageHeader
-            title={property.name || 'House'}
-            description={property.address || undefined}
+            title="House info"
+            description={[property.name, property.address].filter(Boolean).join(', ') || undefined}
             action={
               <button onClick={() => setEditing(true)} className={btn('secondary', 'md', 'w-full sm:w-auto')}>
-                Edit details
+                Edit house info
               </button>
             }
           />

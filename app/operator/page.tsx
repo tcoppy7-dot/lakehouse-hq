@@ -92,8 +92,8 @@ export default function OperatorDashboard() {
   return (
     <AppShell wide>
       <PageHeader
-        title="Operator"
-        description={counts.requested ? `${counts.requested} ${counts.requested === 1 ? 'request needs' : 'requests need'} confirming.` : 'Every request is confirmed.'}
+        title="Jobs"
+        description={`Customer requests for you to confirm, do, and photograph. ${counts.requested ? `${counts.requested} waiting to be confirmed.` : 'Nothing waiting to be confirmed.'}`}
         action={
           <div className="inline-flex rounded-full bg-sunk p-1" role="tablist" aria-label="View">
             {(['list', 'calendar'] as const).map((v) => (

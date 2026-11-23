@@ -212,8 +212,8 @@ export default function Tasks() {
       {step === 'list' && (
         <>
           <PageHeader
-            title="Requests"
-            description="Everything you have asked us to take care of."
+            title="Services"
+            description="Request a service and track everything you have asked us to do."
             action={
               <button onClick={() => setStep('menu')} className={btn('primary', 'md', 'w-full sm:w-auto')}>
                 New request

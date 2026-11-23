@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, use } from 'react'
 import { supabase } from '../../lib/supabase'
-import { LoadingScreen, btn, inputClass } from '../../components/ui'
+import { LoadingScreen, Wordmark, btn, inputClass } from '../../components/ui'
 
 export default function PublicPackingList({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -78,8 +78,8 @@ export default function PublicPackingList({ params }: { params: Promise<{ id: st
   return (
     <main className="flex-1 px-5 py-10 sm:py-16">
       <div className="max-w-md mx-auto">
-        <p className="font-display text-[17px] text-ink-2">Lakehouse HQ</p>
-        <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em] leading-tight">{list.title}</h1>
+        <Wordmark height={20} />
+        <h1 className="mt-6 text-[30px] font-semibold tracking-[-0.02em] leading-tight">{list.title}</h1>
         <p className="mt-2 text-[15px] text-ink-2">Check off what you are packing. For shared items, tap the one you will bring so nobody doubles up.</p>
 
         {everyoneItems.length > 0 && (
