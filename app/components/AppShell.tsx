@@ -46,7 +46,7 @@ function Icon({ name }: { name: (typeof NAV)[number]['icon'] }) {
   )
 }
 
-export default function AppShell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+export default function AppShell({ children, wide = false, focused = false }: { children: ReactNode; wide?: boolean; focused?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isAdmin, setIsAdmin] = useState(false)
@@ -106,6 +106,7 @@ export default function AppShell({ children, wide = false }: { children: ReactNo
                 Operator
               </Link>
             )}
+            {!['/dashboard', '/tasks'].includes(pathname) && (
             <Link
               href="/tasks?new=1"
               onClick={(e) => {
@@ -115,10 +116,11 @@ export default function AppShell({ children, wide = false }: { children: ReactNo
                   window.dispatchEvent(new Event('lakehouse:new-request'))
                 }
               }}
-              className={btn('primary', 'sm', 'hidden md:inline-flex')}
+              className={btn('primary', 'sm', 'max-md:!hidden')}
             >
               New request
             </Link>
+            )}
             <button onClick={signOut} className={btn('quiet', 'sm')}>
               Sign out
             </button>
@@ -126,11 +128,12 @@ export default function AppShell({ children, wide = false }: { children: ReactNo
         </div>
       </header>
 
-      <main className={`flex-1 w-full mx-auto ${wide ? 'max-w-6xl' : 'max-w-5xl'} px-5 sm:px-8 pt-8 sm:pt-12 pb-32 md:pb-20`}>
+      <main className={`flex-1 w-full mx-auto ${wide ? 'max-w-6xl' : 'max-w-5xl'} px-5 sm:px-8 pt-8 sm:pt-12 ${focused ? 'pb-12' : 'pb-32'} md:pb-20`}>
         {children}
       </main>
 
-      {/* Phone tab bar */}
+      {/* Phone tab bar, hidden while a step by step flow is open */}
+      {!focused && (
       <nav
         aria-label="Main"
         className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-line bg-paper/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]"
@@ -153,6 +156,7 @@ export default function AppShell({ children, wide = false }: { children: ReactNo
           })}
         </ul>
       </nav>
+      )}
     </div>
   )
 }

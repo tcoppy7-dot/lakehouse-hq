@@ -192,7 +192,7 @@ export default function Tasks() {
   const stepNumber = STEP_NUMBER[step]
 
   return (
-    <AppShell>
+    <AppShell focused={!!stepNumber}>
       {stepNumber && (
         <div className="mb-8 flex items-center justify-between gap-4">
           <button
@@ -395,7 +395,7 @@ export default function Tasks() {
               />
             </Field>
 
-            <div className="pt-2">
+            <div className="pt-2 max-md:sticky max-md:bottom-0 max-md:-mx-5 max-md:px-5 max-md:pb-[calc(1rem+env(safe-area-inset-bottom))] max-md:pt-3 max-md:bg-paper/95 max-md:backdrop-blur-md max-md:border-t max-md:border-line">
               <button type="button" onClick={() => canContinue && setStep('review')} disabled={!canContinue} className={btn('primary', 'lg', 'w-full sm:w-auto')}>
                 Review request
               </button>
@@ -426,7 +426,7 @@ export default function Tasks() {
           </Card>
           <div className="mt-6 space-y-4">
             <FormError message={error} />
-            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row max-md:sticky max-md:bottom-0 max-md:-mx-5 max-md:px-5 max-md:pb-[calc(1rem+env(safe-area-inset-bottom))] max-md:pt-3 max-md:bg-paper/95 max-md:backdrop-blur-md max-md:border-t max-md:border-line">
               <button type="button" onClick={() => setStep('details')} className={btn('secondary', 'lg')}>
                 Edit
               </button>

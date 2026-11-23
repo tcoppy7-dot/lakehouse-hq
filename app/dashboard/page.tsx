@@ -10,7 +10,7 @@ import { firstName, formatDate, formatShortDate, formatWhen, isUpcoming, todayKe
 
 const STATUS_NOTE: Record<string, string> = {
   requested: 'Waiting for us to confirm. We confirm within 24 hours.',
-  confirmed: 'Confirmed. You will get a photo when it is done.',
+  confirmed: 'You will get a photo when it is done.',
   in_progress: 'Our team is working on it now.',
 }
 
@@ -85,93 +85,66 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-10">
-        {/* Left: visits */}
-        <div className="space-y-8">
-          <section aria-labelledby="next-visit">
-            <SectionTitle
-              action={
-                <Link href="/tasks" className="text-[14px] font-medium text-lake hover:text-lake-dark">
-                  All requests
-                </Link>
-              }
-            >
-              <span id="next-visit">Next visit</span>
-            </SectionTitle>
+      {/* Phones read top to bottom: next visit, house, then the last finished job. */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-10 lg:items-start">
+        <section aria-labelledby="next-visit" className="lg:col-start-1 lg:row-start-1">
+          <SectionTitle
+            action={
+              <Link href="/tasks" className="text-[14px] font-medium text-lake hover:text-lake-dark">
+                All requests
+              </Link>
+            }
+          >
+            <span id="next-visit">Next visit</span>
+          </SectionTitle>
 
-            {next ? (
-              <Card className="p-6 sm:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-[22px] sm:text-[24px] font-semibold tracking-[-0.015em] leading-tight">{next.title}</p>
-                  <StatusChip status={next.status} />
-                </div>
-                <p className="mt-2 text-[16px] text-ink">{formatWhen(next.scheduled_date, next.scheduled_time)}</p>
-                {STATUS_NOTE[next.status] && <p className="mt-4 text-[15px] text-ink-2">{STATUS_NOTE[next.status]}</p>}
-                {next.description && (
-                  <p className="mt-4 rounded-xl bg-sunk px-4 py-3 text-[15px] text-ink-2">
-                    <span className="text-ink font-medium">Your note: </span>
-                    {next.description}
-                  </p>
-                )}
-                {alsoScheduled.length > 0 && (
-                  <div className="mt-6 border-t border-line pt-4">
-                    <p className="text-[13px] font-medium text-ink-3 mb-2">Also scheduled</p>
-                    <ul className="divide-y divide-line">
-                      {alsoScheduled.map((t) => (
-                        <li key={t.id} className="flex items-center justify-between gap-4 py-2.5 text-[15px]">
-                          <span className="truncate">{t.title}</span>
-                          <span className="text-ink-2 whitespace-nowrap">{formatShortDate(t.scheduled_date)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </Card>
-            ) : (
-              <Card className="p-6 sm:p-7">
-                <p className="text-[20px] font-semibold tracking-[-0.01em]">Nothing scheduled</p>
-                <p className="mt-2 text-[15px] text-ink-2 max-w-md">
-                  Request a service and your next visit will show up here, with its status as we confirm and finish it.
+          {next ? (
+            <Card className="p-6 sm:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <p className="text-[22px] sm:text-[24px] font-semibold tracking-[-0.015em] leading-tight">{next.title}</p>
+                <StatusChip status={next.status} />
+              </div>
+              <p className="mt-2 text-[16px] text-ink">{formatWhen(next.scheduled_date, next.scheduled_time)}</p>
+              {STATUS_NOTE[next.status] && <p className="mt-4 text-[15px] text-ink-2">{STATUS_NOTE[next.status]}</p>}
+              {next.description && (
+                <p className="mt-4 rounded-xl bg-sunk px-4 py-3 text-[15px] text-ink-2">
+                  <span className="text-ink font-medium">Your note: </span>
+                  {next.description}
                 </p>
-                {unconfirmedPast > 0 && (
-                  <p className="mt-4 rounded-xl bg-sunk px-4 py-3 text-[14px] text-ink-2">
-                    {unconfirmedPast === 1 ? 'One past request was' : `${unconfirmedPast} past requests were`} never confirmed.{' '}
-                    <Link href="/tasks" className="font-medium text-lake hover:text-lake-dark">
-                      Review requests
-                    </Link>
-                  </p>
-                )}
-              </Card>
-            )}
-          </section>
-
-          <section aria-labelledby="last-done">
-            <SectionTitle>
-              <span id="last-done">Last finished</span>
-            </SectionTitle>
-            {lastDone ? (
-              <Card className="overflow-hidden">
-                {lastDone.photo_url && (
-                  // Completion photos come from Supabase Storage, so a plain img keeps the remote config simple.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={lastDone.photo_url} alt={`Completion photo for ${lastDone.title}`} className="w-full aspect-[16/9] object-cover bg-sunk" />
-                )}
-                <div className="p-5 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[16px] font-semibold">{lastDone.title}</p>
-                    <p className="mt-1 text-[14px] text-ink-2">{formatDate(lastDone.scheduled_date)}</p>
-                  </div>
-                  <StatusChip status="completed" />
+              )}
+              {alsoScheduled.length > 0 && (
+                <div className="mt-6 border-t border-line pt-4">
+                  <p className="text-[13px] font-medium text-ink-3 mb-2">Also scheduled</p>
+                  <ul className="divide-y divide-line">
+                    {alsoScheduled.map((t) => (
+                      <li key={t.id} className="flex items-center justify-between gap-4 py-2.5 text-[15px]">
+                        <span className="truncate">{t.title}</span>
+                        <span className="text-ink-2 whitespace-nowrap">{formatShortDate(t.scheduled_date)}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </Card>
-            ) : (
-              <p className="text-[15px] text-ink-2">When we finish a job, the completion photo will appear here.</p>
-            )}
-          </section>
-        </div>
+              )}
+            </Card>
+          ) : (
+            <Card className="p-6 sm:p-7">
+              <p className="text-[20px] font-semibold tracking-[-0.01em]">Nothing scheduled</p>
+              <p className="mt-2 text-[15px] text-ink-2 max-w-md">
+                Request a service and your next visit will show up here, with its status as we confirm and finish it.
+              </p>
+              {unconfirmedPast > 0 && (
+                <p className="mt-4 rounded-xl bg-sunk px-4 py-3 text-[14px] text-ink-2">
+                  {unconfirmedPast === 1 ? 'One past request was' : `${unconfirmedPast} past requests were`} never confirmed.{' '}
+                  <Link href="/tasks" className="font-medium text-lake hover:text-lake-dark">
+                    Review requests
+                  </Link>
+                </p>
+              )}
+            </Card>
+          )}
+        </section>
 
-        {/* Right: house */}
-        <div className="space-y-8">
+        <div className="space-y-8 lg:col-start-2 lg:row-start-1 lg:row-span-2">
           <section aria-labelledby="house">
             <SectionTitle
               action={
@@ -249,6 +222,30 @@ export default function Dashboard() {
             </Card>
           </section>
         </div>
+
+        <section aria-labelledby="last-done" className="lg:col-start-1 lg:row-start-2">
+          <SectionTitle>
+            <span id="last-done">Last finished</span>
+          </SectionTitle>
+          {lastDone ? (
+            <Card className="overflow-hidden">
+              {lastDone.photo_url && (
+                // Completion photos come from Supabase Storage, so a plain img keeps the remote config simple.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={lastDone.photo_url} alt={`Completion photo for ${lastDone.title}`} className="w-full aspect-[16/9] object-cover bg-sunk" />
+              )}
+              <div className="p-5 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[16px] font-semibold">{lastDone.title}</p>
+                  <p className="mt-1 text-[14px] text-ink-2">{formatDate(lastDone.scheduled_date)}</p>
+                </div>
+                <StatusChip status="completed" />
+              </div>
+            </Card>
+          ) : (
+            <p className="text-[15px] text-ink-2">When we finish a job, the completion photo will appear here.</p>
+          )}
+        </section>
       </div>
     </AppShell>
   )

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 /* ---------- Wordmark ---------- */
 export function Wordmark({ href = '/', className = '' }: { href?: string; className?: string }) {
   return (
-    <Link href={href} className={`font-display text-[21px] leading-none tracking-[-0.01em] text-ink ${className}`} aria-label="Lakehouse HQ">
+    <Link href={href} className={`font-display text-[21px] leading-none whitespace-nowrap tracking-[-0.01em] text-ink ${className}`} aria-label="Lakehouse HQ">
       Lakehouse <span className="text-ink-2">HQ</span>
     </Link>
   )
@@ -15,7 +15,7 @@ type Variant = 'primary' | 'secondary' | 'quiet' | 'danger'
 type Size = 'md' | 'lg' | 'sm'
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none select-none'
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-colors disabled:opacity-40 disabled:pointer-events-none select-none'
 const variants: Record<Variant, string> = {
   primary: 'bg-lake text-white hover:bg-lake-dark',
   secondary: 'bg-surface text-ink border border-line hover:border-ink-3',

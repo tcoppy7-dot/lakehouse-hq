@@ -176,7 +176,7 @@ export default function PublicPackingList({ params }: { params: Promise<{ id: st
           </section>
         )}
 
-        {allDone && <p className="mt-10 rounded-2xl bg-lake-tint px-5 py-4 text-[15px] text-lake-dark font-medium">Everything is packed and claimed. See you at the lake.</p>}
+        {allDone && <p className="mt-10 rounded-2xl bg-lake-tint px-5 py-4 text-[15px] text-lake-dark font-medium">Everything is packed and claimed.</p>}
       </div>
     </main>
   )

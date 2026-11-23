@@ -233,9 +233,9 @@ export default function PropertyHub() {
 function Item({ label, children }: { label: string; children: React.ReactNode }) {
   const empty = children === '' || children == null
   return (
-    <div className="flex items-start justify-between gap-6 px-5 py-4">
-      <dt className="text-ink-2 shrink-0">{label}</dt>
-      <dd className="text-right">{empty ? <span className="text-ink-3">Not set</span> : children}</dd>
+    <div className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+      <dt className="text-[13px] text-ink-3 sm:text-[15px] sm:text-ink-2 shrink-0">{label}</dt>
+      <dd className="sm:text-right">{empty ? <span className="text-ink-3">Not set</span> : children}</dd>
     </div>
   )
 }
